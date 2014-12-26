@@ -43,9 +43,11 @@ Object ReadExpr::getObj(void* l, void* r){
     if ( useLeft ) {
         ret.is_null = nullMask & *(unsigned short*)l;
         ret.loc = (char*)l + offset;
+        ret.type = type;
     } else {
         ret.is_null = nullMask & *(unsigned short*)r;
         ret.loc = (char*)r + offset;
+        ret.type = type;
     }
     return ret;
 }
@@ -58,6 +60,7 @@ void ReadExpr::Use(const std::string& lname, const std::string& rname, TableDesc
         for ( int i=0; i<ldesc->colSize; i++ ) {
             if ( name == ldesc->colType[i].name ) {
                 size = ldesc->colType[i].size;
+                type = ldesc->colType[i].type;
                 return;
             } else {
                 offset += ldesc->colType[i].size;
@@ -67,10 +70,11 @@ void ReadExpr::Use(const std::string& lname, const std::string& rname, TableDesc
         useLeft = false;
          for ( int i=0; i<rdesc->colSize; i++ ) {
             if ( name == rdesc->colType[i].name ) {
-                size = ldesc->colType[i].size;
+                size = rdesc->colType[i].size;
+                type = rdesc->colType[i].type;
                 return;
             } else {
-                offset += ldesc->colType[i].size;
+                offset += rdesc->colType[i].size;
                 nullMask <<= 1;
             }
         }
@@ -79,6 +83,7 @@ void ReadExpr::Use(const std::string& lname, const std::string& rname, TableDesc
         for ( int i=0; i<ldesc->colSize; i++ ) {
             if ( name == ldesc->colType[i].name ) {
                 size = ldesc->colType[i].size;
+                type = ldesc->colType[i].type;
                 return;
             } else {
                 offset += ldesc->colType[i].size;
@@ -89,10 +94,11 @@ void ReadExpr::Use(const std::string& lname, const std::string& rname, TableDesc
         useLeft = false;
          for ( int i=0; i<rdesc->colSize; i++ ) {
             if ( name == rdesc->colType[i].name ) {
-                size = ldesc->colType[i].size;
+                size = rdesc->colType[i].size;
+                type = rdesc->colType[i].type;
                 return;
             } else {
-                offset += ldesc->colType[i].size;
+                offset += rdesc->colType[i].size;
                 nullMask <<= 1;
             }
         }

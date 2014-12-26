@@ -33,6 +33,7 @@ struct ReadExpr : public Expr {
     int offset;
     int size;
     int nullMask;
+    TYPE type;
     std::string tbl, name;
     ReadExpr(const std::string& _name) : tbl(""), name(_name) {}
     ReadExpr(const std::string& _tbl, const std::string& _name) : tbl(_tbl), name(_name) {}

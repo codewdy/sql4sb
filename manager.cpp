@@ -75,10 +75,19 @@ void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std
     if ( tbl2 == "" ) {
         auto filtered = filterOne(tbl1, conds);
         auto table = getTable(tbl1, false);
-        for (auto row : filtered)
+        for (auto row : filtered) {
             WriteRow(row, table->head->desc);
+            std::cout << std::endl;
+        }
     } else {
         auto filtered = filterTwo(tbl1, tbl2, conds);
+        auto table1 = getTable(tbl1, false);
+        auto table2 = getTable(tbl2, false);
+        for (auto row : filtered) {
+            WriteRow(row.first, table1->head->desc);
+            WriteRow(row.second, table2->head->desc);
+            std::cout << std::endl;
+        }
     }
 }
 
@@ -118,21 +127,23 @@ void Manager::CreateTable(const std::string& tbl, const std::vector<Type>& types
 
 
 void Manager::DropTable(const std::string& tbl) {
-
+    tables.erase(tblFileName(tbl));
+    std::remove(tblFileName(tbl).c_str());
 }
 
 Table* Manager::getTable(const std::string& tbl, bool init){
+    std::string t_tbl = tblFileName(tbl);
     if (init) {
-        auto& ptbl = tables[tbl];
+        auto& ptbl = tables[t_tbl];
         if (ptbl == nullptr) {
-            ptbl = new Table(tbl, true);
+            ptbl = new Table(t_tbl, true);
             return ptbl;
         }
         throw "Table Already Exist";
     } else {
-        auto& ptbl = tables[tbl];
+        auto& ptbl = tables[t_tbl];
         if (ptbl == nullptr) {
-            ptbl = new Table(tbl, true);
+            ptbl = new Table(t_tbl, true);
         }
         return ptbl;
     }
@@ -146,13 +157,17 @@ std::vector<void*> Manager::filterOne(const std::string& tbl, const std::vector<
         conds[k].r->Use(tbl, "", &table->head->desc);
     }
     for ( auto record : table->usedRecords ) {
+        bool OK = true;
        for (int k = 0; k<conds.size(); k++ ) {
            Expr *l = conds[k].l;
            Expr *r = conds[k].r;
-           if (conds[k].op(l->getObj(record, nullptr), r->getObj(record, nullptr))) {
-               filtered.push_back(record);
+           if (!conds[k].op(l->getObj(record, nullptr), r->getObj(record, nullptr))) {
+               OK = false;
+               break;
            }
        }
+       if (OK)
+           filtered.push_back(record);
     }
     return std::move(filtered);
 }
@@ -162,16 +177,24 @@ std::vector<std::pair<void*, void*>> Manager::filterTwo(const std::string& tbl1,
     std::vector<std::pair<void*, void*>> filtered;
     Table* table1 = getTable(tbl1, false);
     Table* table2 = getTable(tbl2, false);
+    for (int k = 0; k < conds.size(); k++) {
+        conds[k].l->Use(tbl1, tbl2, &table1->head->desc, &table2->head->desc);
+        conds[k].r->Use(tbl1, tbl2, &table1->head->desc, &table2->head->desc);
+    }
     for ( auto record1 : table1->usedRecords ) {
         for (auto record2 : table2->usedRecords) {
+            bool OK = true;
             for (int k = 0; k<conds.size(); k++ ) {
                 Expr *l = conds[k].l;
                 Expr *r = conds[k].r;
                 if (conds[k].op(l->getObj(record1, record2),
                             r->getObj(record1, record2))) {
-                    filtered.push_back(std::make_pair(record1, record2));
+                    OK = false;
+                    break;
                 }
             }
+            if (OK)
+                filtered.push_back(std::make_pair(record1, record2));
         }
     }
     return std::move(filtered);

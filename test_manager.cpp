@@ -22,6 +22,7 @@ int main() {
     std::vector<Object> objects;
     LiteralManager lmanager;
     Object obj4 = lmanager.GetInt(4);
+    Object obj5 = lmanager.GetInt(5);
     objects.push_back(obj4);
     std::string str_ = "hello";
     Object objstr = lmanager.GetVarChar(str_);
