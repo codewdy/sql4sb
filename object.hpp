@@ -11,7 +11,7 @@ struct Object {
 };
 struct LiteralManager {
     Object GetInt(int l);
-    Object GetVarChar(const std::string& l);
+    Object GetVarChar(std::string& l);
     void clear();
 };
 struct Expr {
@@ -47,5 +47,4 @@ bool op_lt(const Object&, const Object&);
 bool op_gt(const Object&, const Object&);
 bool op_le(const Object&, const Object&);
 bool op_ge(const Object&, const Object&);
-bool op_asn(const Object&, const Object&);
 #endif

@@ -16,12 +16,16 @@ struct Manager {
     void Insert(const std::string& tbl, const std::vector<std::vector<Object>>& rows);
     void Delete(const std::string& tbl, const std::vector<Condition>& conds);
     void Select(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds);
-    void Update(const std::string& tbl, const std::vector<Condition>& conds, ReadExpr& lv, const Object& rv);
+    void Update(const std::string& tbl, const std::vector<Condition>& conds, const ReadExpr& lv, const Object& rv);
     void CreateTable(const std::string& tbl, const std::vector<TYPE>& types);
     void DropTable(const std::string& tbl);
     void Use(const std::string& db);
     void CreateDB(const std::string& db);
     void DropDB(const std::string& db);
 };
+
+
+bool isCorrect(Object& obj1, Object& obj2, Oper op);
+
 
 #endif

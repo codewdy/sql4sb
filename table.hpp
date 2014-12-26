@@ -8,10 +8,12 @@
 #include <vector>
 #include "type.hpp"
 const int PAGE_SIZE = 8192;
+const int NAME_LEN = 10;
 struct Type {
     TYPE type;
     bool null;
     int size;
+    char name[NAME_LEN];
     void operator = (Type& ty) {
         type = ty.type;
         null = ty.null;
