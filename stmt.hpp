@@ -1,6 +1,5 @@
 #ifndef Stmt_H
 #define Stmt_H
-
 #include "manager.hpp"
 
 struct Stmt {
@@ -31,7 +30,7 @@ struct UpdateStmt : public Stmt {
 };
 struct CreateTableStmt : public Stmt {
     std::string tbl;
-    std::vector<Info> infos;
+    std::vector<Type> types;
     virtual void Run(Manager& manager);
 };
 struct DropTableStmt : public Stmt {
