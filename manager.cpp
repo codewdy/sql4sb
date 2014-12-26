@@ -16,10 +16,14 @@ void WriteBinRow(void* buf, const TableDesc& desc, const std::vector<Object>& ob
         if (objs[i].is_null)
             nullX |= nullMask;
         else
-            memcpy(iter, objs[i].loc, desc.colSize);
+            memcpy(iter, objs[i].loc, desc.colType[i].size);
         nullMask <<= 1;
         (char*&)iter += desc.colType[i].size;
     }
+}
+
+std::string Manager::tblFileName(const std::string& tbl) {
+    return dbName + ":" + tbl + ".db";
 }
 
 void Manager::Insert(const std::string& tbl, const std::vector<std::vector<Object>>& rows) {
@@ -187,7 +191,7 @@ std::vector<std::pair<void*, void*>> Manager::filterTwo(const std::string& tbl1,
             for (int k = 0; k<conds.size(); k++ ) {
                 Expr *l = conds[k].l;
                 Expr *r = conds[k].r;
-                if (conds[k].op(l->getObj(record1, record2),
+                if (!conds[k].op(l->getObj(record1, record2),
                             r->getObj(record1, record2))) {
                     OK = false;
                     break;

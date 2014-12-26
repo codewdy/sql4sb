@@ -4,7 +4,8 @@
 #include <cstdio>
 
 int main() {
-    std::remove("test");
+    std::remove(":table1.db");
+    std::remove(":table2.db");
     Manager manager;
 
     // two columns
@@ -54,27 +55,28 @@ int main() {
 
     //conds 1
     ReadExpr lexpr("table1", "id");
-    LiteralExpr rexpr = LiteralExpr(obj4);
+    LiteralExpr rexpr = LiteralExpr(obj2);
     Condition cond;
-    cond.l = &lexpr;
-    cond.r = &rexpr;
+    cond.l = new ReadExpr(lexpr);
+    cond.r = new LiteralExpr(rexpr);
     cond.op = op_eq;
     conds.push_back(cond);
     //conds 2
     lexpr = ReadExpr("table1", "name");
     rexpr = LiteralExpr(objstr);
-    cond.l = &lexpr;
-    cond.r = &rexpr;
+    cond.l = new ReadExpr(lexpr);
+    cond.r = new LiteralExpr(rexpr);
     cond.op = op_eq;
     conds.push_back(cond);
     // two conditions one table
     manager.Select("table1", "", conds);
 
     lexpr = ReadExpr("table1", "name");
-    ReadExpr readrexpr = ReadExpr("table1", "name");
-    cond.l = &lexpr;
-    cond.r = &readrexpr;
+    ReadExpr readrexpr = ReadExpr("table2", "name");
+    cond.l = new ReadExpr(lexpr);
+    cond.r = new ReadExpr(readrexpr);
     cond.op = op_eq;
+    conds.clear();
     conds.push_back(cond);
     // three conditions two tables
     manager.Select("table1", "table2", conds);
