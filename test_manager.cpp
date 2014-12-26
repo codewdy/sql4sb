@@ -6,36 +6,77 @@
 int main() {
     std::remove("test");
     Manager manager;
-    std::vector<Type> types;
-    Type type(TYPE_INT, false, 4, "id");
-    types.push_back(type);
-    manager.CreateTable("test", types); 
 
-    std::vector<Object> objects;
+    // two columns
+    std::vector<Type> types;
+    Type typeint(TYPE_INT, false, 4, "id");
+    Type typechar(TYPE_VARCHAR, false, 10, "name");
+    types.push_back(typeint);
+    types.push_back(typechar);
+    manager.CreateTable("table1", types); 
+
+
     std::vector<std::vector<Object>> obj_vec;
+    
+    //record1
+    std::vector<Object> objects;
     LiteralManager lmanager;
     Object obj4 = lmanager.GetInt(4);
     objects.push_back(obj4);
+    std::string str_ = "hello";
+    Object objstr = lmanager.GetVarChar(str_);
+    objects.push_back(objstr);
     obj_vec.push_back(objects);
-    std::string str = "test";
+
+    //record2
+    objects.clear();
+    Object obj2 = lmanager.GetInt(2);
+    objects.push_back(obj2);
+    std::string strfine = "fine";
+    objstr = lmanager.GetVarChar(strfine);
+    objects.push_back(objstr);
+    obj_vec.push_back(objects);
+    std::string str = "table1";
+    // insert two records
     manager.Insert(str, obj_vec);
 
+    //table2
+    manager.CreateTable("table2", types); 
+    str = "table2";
+    manager.Insert(str, obj_vec);
+
+    std::vector<Condition> conds;
     TableDesc desc;
-    desc.colSize = 1;
-    desc.colType[0] = type;
-    ReadExpr lexpr("test", "id");
-    Table* table = manager.getTable("test", false);
-    lexpr.Use("test", "", &desc, NULL); 
-    LiteralExpr rexpr(obj4);
+    desc.colSize = 2;
+    desc.colType[0] = typeint;
+    desc.colType[1] = typechar;
+
+    //conds 1
+    ReadExpr lexpr("table1", "id");
+    LiteralExpr rexpr = LiteralExpr(obj4);
     Condition cond;
     cond.l = &lexpr;
     cond.r = &rexpr;
     cond.op = op_eq;
-    std::vector<Condition> conds;
     conds.push_back(cond);
-    //manager.Update(str, conds, lexpr, obj);  
+    //conds 2
+    lexpr = ReadExpr("table1", "name");
+    rexpr = LiteralExpr(objstr);
+    cond.l = &lexpr;
+    cond.r = &rexpr;
+    cond.op = op_eq;
+    conds.push_back(cond);
+    // two conditions one table
+    manager.Select("table1", "", conds);
 
-    manager.Select("test", "", conds);
+    lexpr = ReadExpr("table1", "name");
+    ReadExpr readrexpr = ReadExpr("table1", "name");
+    cond.l = &lexpr;
+    cond.r = &readrexpr;
+    cond.op = op_eq;
+    conds.push_back(cond);
+    // three conditions two tables
+    manager.Select("table1", "table2", conds);
 
     //manager.Delete("test", conds);
 }
