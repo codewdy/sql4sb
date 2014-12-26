@@ -3,7 +3,9 @@
 #include <unordered_map>
 #include <map>
 #include <unordered_set>
+#include <set>
 #include <string>
+#include <vector>
 #include "type.hpp"
 const int PAGE_SIZE = 8192;
 struct Type {
@@ -40,16 +42,18 @@ struct InfoPage {
 struct Table {
     std::string filename;
     std::unordered_map<void*, Info*> recordInfoMap;
-    std::unordered_set<void*> usedRecords, emptyRecords;
+    std::unordered_set<Info*> usedRecords, emptyRecords;
     std::map<void*, int> pageIndex;
-    std::unordered_map<int, void*> pages;
-    std::unordered_set<void*> dirtyPages;
+    std::vector<void*> pages;
+    std::set<int> dirtyPages;
     int rowSize;
-    TableDesc* desc;
+    HeadPage* head;
+    InfoPage* LastInfoPage;
     Table(const std::string& _filename, bool init = false);
     void setDirty(void* dst);
+    void setDirty(int page_id);
     void writeback();
-    void getPage(int page_id);
+    void* getPage(int page_id);
     void* genNewRecord();
     void removeRecord(void*);
     int newPage();
