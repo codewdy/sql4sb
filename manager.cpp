@@ -1,4 +1,8 @@
+#include <iostream>
+#include <cstdlib>
+
 #include "manager.hpp"
+#include "table.hpp"
 
 void checkType(Type type, const Object& obj) {
     //TODO
@@ -28,3 +32,12 @@ void Manager::Insert(const std::string& tbl, const std::vector<std::vector<Objec
         }
     }
 }
+void Manager::Delete(const std::string& tbl, const std::vector<Condition>& conds){
+    Table* table = getTable(tbl, false);
+    std::vector<void*> filtered = filterOne(tbl, conds);
+    for ( const auto& record : filtered) {
+        Info* info = table->recordInfoMap[record];
+        info->free = true;
+    }
+}
+
