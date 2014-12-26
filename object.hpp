@@ -17,6 +17,9 @@ struct Object {
     }
 };
 struct LiteralManager {
+    const int MAX_LENGTH = 40;
+    std::vector<char*> chars;
+    std::vector<int*> ints;
     Object GetInt(int l);
     Object GetVarChar(std::string& l);
     void clear();
@@ -29,6 +32,7 @@ struct ReadExpr : public Expr {
     bool useLeft;
     int offset;
     int size;
+    int nullMask;
     std::string tbl, name;
     ReadExpr(const std::string& _name) : tbl(""), name(_name) {}
     ReadExpr(const std::string& _tbl, const std::string& _name) : tbl(_tbl), name(_name) {}

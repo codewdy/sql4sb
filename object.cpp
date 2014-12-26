@@ -5,49 +5,95 @@
 
 Object LiteralManager::GetVarChar(std::string& l) {
     Object obj;
-    obj.loc = &l;
+    char* buf = new char[MAX_LENGTH];
+    memcpy(buf, l.data(), l.size());
+    memset(buf + l.size(), 0, MAX_LENGTH - l.size());
+    chars.push_back(buf);
+    obj.loc = buf;
     obj.size = l.size();
     obj.type = TYPE_VARCHAR;
-    obj.is_null = false; // ?
+    obj.is_null = false;
     return obj;
 }
 
 Object LiteralManager::GetInt(int l) {
     Object obj;
-    obj.loc = &l;
+    int* buf = new int;
+    ints.push_back(buf);
+    *buf = l;
+    obj.loc = buf;
     obj.size = sizeof(l);
     obj.type = TYPE_INT;
     obj.is_null = false;
     return obj;
 }
 
+void LiteralManager::clear() {
+    for (auto c : chars)
+        delete [] c;
+    for (auto i : ints)
+        delete i;
+    chars.clear();
+    ints.clear();
+}
+
 Object ReadExpr::getObj(void* l, void* r){
-    if ( useLeft )
-        return *((Object*)l+offset);
-    else 
-        return *((Object*)r+offset);
+    Object ret;
+    ret.size = size;
+    if ( useLeft ) {
+        ret.is_null = nullMask & *(unsigned short*)l;
+        ret.loc = (char*)l + offset;
+    } else {
+        ret.is_null = nullMask & *(unsigned short*)r;
+        ret.loc = (char*)r + offset;
+    }
+    return ret;
 }
 
 void ReadExpr::Use(const std::string& lname, const std::string& rname, TableDesc* ldesc, TableDesc* rdesc) {
-    offset = 0;
-    if (tbl == lname) {
+    offset = 2;
+    if (tbl == "") {
+        nullMask = 1;
         useLeft = true;
         for ( int i=0; i<MaxCol; i++ ) {
-            if ( std::strcmp(ldesc->colType[i].name , name.c_str()) == 0 ) {
+            if ( name == ldesc->colType[i].name ) {
                 size = ldesc->colType[i].size;
                 return;
             } else {
                 offset += ldesc->colType[i].size;
+                nullMask <<= 1;
+            }
+        }
+        useLeft = false;
+         for ( int i=0; i<MaxCol; i++ ) {
+            if ( name == rdesc->colType[i].name ) {
+                size = ldesc->colType[i].size;
+                return;
+            } else {
+                offset += ldesc->colType[i].size;
+                nullMask <<= 1;
+            }
+        }
+    } else if (tbl == lname) {
+        useLeft = true;
+        for ( int i=0; i<MaxCol; i++ ) {
+            if ( name == ldesc->colType[i].name ) {
+                size = ldesc->colType[i].size;
+                return;
+            } else {
+                offset += ldesc->colType[i].size;
+                nullMask <<= 1;
             }
         }
     } else {
         useLeft = false;
          for ( int i=0; i<MaxCol; i++ ) {
-            if ( std::strcmp(rdesc->colType[i].name, name.c_str()) == 0 ) {
+            if ( name == rdesc->colType[i].name ) {
                 size = ldesc->colType[i].size;
                 return;
             } else {
                 offset += ldesc->colType[i].size;
+                nullMask <<= 1;
             }
         }
     }
@@ -61,116 +107,27 @@ void LiteralExpr::Use(const std::string& lname, const std::string& rname, TableD
     return;
 }
 
-bool op_eq(const Object& lobj, const Object& robj){
-    if ( lobj.type != robj.type ) {
-        throw "Type Error";
-        return false;
-    }
-    if ( lobj.is_null != robj.is_null )
-        return false;
-    if ( lobj.type == TYPE_INT ){
-        int* l = (int*)lobj.loc;
-        int* r = (int*)robj.loc;
-        return (*l == *r);
-    } else {
-        if (strcmp((char*)lobj.loc, (char*)robj.loc) == 0)
-            return true;
-        return false;
-    }
+#define DEF_OP(OP, RAW_OP) \
+bool op_##OP(const Object& lobj, const Object& robj){\
+    if ( lobj.type != robj.type ) {\
+        throw "Type Error";\
+    }\
+    if ( lobj.is_null || robj.is_null )\
+        return false;\
+    if ( lobj.type == TYPE_INT ){\
+        int* l = (int*)lobj.loc;\
+        int* r = (int*)robj.loc;\
+        return (*l RAW_OP *r);\
+    } else {\
+        if (memcmp((char*)lobj.loc, (char*)robj.loc, lobj.size) RAW_OP 0)\
+            return true;\
+        return false;\
+    }\
 }
 
-bool op_ne(const Object& lobj, const Object& robj){
-    if ( lobj.type != robj.type ) {
-        throw "Type Error";
-        return true;
-    }
-    if ( lobj.is_null != robj.is_null )
-        return true;
-    if ( lobj.type == TYPE_INT ){
-        int* l = (int*)lobj.loc;
-        int* r = (int*)robj.loc;
-        return (*l != *r);
-    } else {
-        if (strcmp((char*)lobj.loc, (char*)robj.loc) == 0)
-            return false;
-        return true;
-    }
-}
-
-bool op_le(const Object& lobj, const Object& robj){
-    if ( lobj.type != robj.type ) {
-        throw "Type Error";
-        return false;
-    }
-    if ( lobj.is_null != robj.is_null )
-        return false;
-    if ( lobj.type == TYPE_INT ){
-        int* l = (int*)lobj.loc;
-        int* r = (int*)robj.loc;
-        return (*l <= *r);
-    } else {
-        if (strcmp((char*)lobj.loc, (char*)robj.loc) == -1 ||
-                strcmp((char*)lobj.loc, (char*)robj.loc) == 0 )
-            return true;
-        return false;
-    }
-}
-
-bool op_ge(const Object& lobj, const Object& robj){
-        if ( lobj.type != robj.type ) {
-        throw "Type Error";
-        return false;
-    }
-    if ( lobj.is_null != robj.is_null )
-        return false;
-    if ( lobj.type == TYPE_INT ){
-        int* l = (int*)lobj.loc;
-        int* r = (int*)robj.loc;
-        return (*l >= *r);
-    } else {
-        if (strcmp((char*)lobj.loc, (char*)robj.loc) == 1 ||
-                strcmp((char*)lobj.loc, (char*)robj.loc) == 0 )
-            return true;
-        return false;
-    }
-}
-
-bool op_lt(const Object& lobj, const Object& robj){
-    if ( lobj.type != robj.type ) {
-        throw "Type Error";
-        return false;
-    }
-    if ( lobj.is_null != robj.is_null )
-        return false;
-    if ( lobj.type == TYPE_INT ){
-        int* l = (int*)lobj.loc;
-        int* r = (int*)robj.loc;
-        return (*l < *r);
-    } else {
-        if (strcmp((char*)lobj.loc, (char*)robj.loc) == -1  )
-            return true;
-        return false;
-    }
-}
-
-bool op_gt(const Object& lobj, const Object& robj){
-        if ( lobj.type != robj.type ) {
-        throw "Type Error";
-        return false;
-    }
-    if ( lobj.is_null != robj.is_null )
-        return false;
-    if ( lobj.type == TYPE_INT ){
-        int* l = (int*)lobj.loc;
-        int* r = (int*)robj.loc;
-        return (*l > *r);
-    } else {
-        if (strcmp((char*)lobj.loc, (char*)robj.loc) == 1 )
-            return true;
-        return false;
-    }
-}
-
-
-
-    
+DEF_OP(eq, ==)
+DEF_OP(ne, !=)
+DEF_OP(lt, <)
+DEF_OP(gt, >)
+DEF_OP(le, <=)
+DEF_OP(ge, >=)

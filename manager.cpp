@@ -6,11 +6,20 @@
 #include "object.hpp"
 
 void checkType(Type type, const Object& obj) {
-    //TODO
 }
 
 void WriteBinRow(void* buf, const TableDesc& desc, const std::vector<Object>& objs) {
-    //TODO
+    unsigned short nullMask = 1;
+    unsigned short nullX = 0;
+    void* iter = (char*)buf + 2;
+    for (int i = 0; i < desc.colSize; i++) {
+        if (objs[i].is_null)
+            nullX |= nullMask;
+        else
+            memcpy(iter, objs[i].loc, desc.colSize);
+        nullMask <<= 1;
+        (char*&)iter += desc.colType[i].size;
+    }
 }
 
 void Manager::Insert(const std::string& tbl, const std::vector<std::vector<Object>>& rows) {
@@ -75,12 +84,18 @@ void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std
 
 void Manager::Update(const std::string& tbl, const std::vector<Condition>& conds, ReadExpr& lv, const Object& rv){
     std::vector<void*> filtered = filterOne(tbl, conds);
+    Table* table = getTable(tbl, false);
     for ( void* record : filtered ) {
-        Object obj = lv.getObj(record);
-        TYPE type = obj.type;
-        //WriteObj(&obj, type, rv);
-       
+        if (rv.is_null) {
+            *(unsigned short*)record |= lv.nullMask;
+        } else {
+            *(unsigned short*)record &= ~lv.nullMask;
+            Object obj = lv.getObj(record);
+            memcpy(obj.loc, rv.loc, lv.size);
+        }
+        table->setDirty(record);
     }
+    table->writeback();
 }
 
 
@@ -98,6 +113,7 @@ void Manager::CreateTable(const std::string& tbl, const std::vector<Type>& types
         table->rowSize += types[i].size;
     }
     table->setDirty(0);
+    table->writeback();
 }
 
 
