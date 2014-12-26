@@ -53,7 +53,7 @@ void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std
     // 输出
 }
 
-void Manager::Update(const std::string& tbl, const std::vector<Condition>& conds, const ReadExpr& lv, const Object& rv){
+void Manager::Update(const std::string& tbl, const std::vector<Condition>& conds, ReadExpr& lv, const Object& rv){
     std::vector<void*> filtered = filterOne(tbl, conds);
     for ( void* record : filtered ) {
         Object obj = lv.getObj(record);
@@ -92,3 +92,38 @@ void Manager::CreateTable(const std::string& tbl, const std::vector<TYPE>& types
 void Manager::DropTable(const std::string& tbl) {
 
 }
+
+
+std::vector<void*> Manager::filterOne(const std::string& tbl, const std::vector<Condition>& conds) {
+    std::vector<void*> filtered;
+    Table* table = getTable(tbl, false);
+    for ( auto record : table->usedRecords ) {
+       for (int k = 0; k<conds.size(); k++ ) {
+           Expr *l = conds[k].l;
+           Expr *r = conds[k].r;
+           if (conds[k].op(l->getObj(record, NULL), r->getObj(record, NULL))) {
+               filtered.push_back(record);
+           }
+       }
+    }
+}
+
+
+std::vector<void*> Manager::filterTwo(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds) {
+    std::vector<void*> filtered;
+    Table* table1 = getTable(tbl1, false);
+    Table* table2 = getTable(tbl2, false);
+    for ( auto record1 : table1->usedRecords ) {
+        for (auto record2 : table2->usedRecords) {
+            for (int k = 0; k<conds.size(); k++ ) {
+                Expr *l = conds[k].l;
+                Expr *r = conds[k].r;
+                if (conds[k].op(l->getObj(record1, record2),
+                            r->getObj(record1, record2))) {
+                    std::pair<void*, void*> rec(record1, record2); 
+                    filtered.push_back(&rec);
+           }
+       }
+    }
+}
+

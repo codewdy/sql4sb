@@ -35,15 +35,17 @@ struct LiteralExpr : public Expr {
     virtual void Use(const std::string& lname, const std::string& rname, TableDesc* ldesc, TableDesc* rdesc = nullptr);
 };
 typedef bool (*Oper)(const Object&, const Object&);
+
 struct Condition {
     Expr *l, *r;
     Oper op;
 };
-inline bool op_eq(const Object&, const Object&);
-inline bool op_ne(const Object&, const Object&);
-inline bool op_lt(const Object&, const Object&);
-inline bool op_gt(const Object&, const Object&);
-inline bool op_le(const Object&, const Object&);
-inline bool op_ge(const Object&, const Object&);
-inline bool op_asn(const Object&, const Object&);
+
+bool op_eq(const Object&, const Object&);
+bool op_ne(const Object&, const Object&);
+bool op_lt(const Object&, const Object&);
+bool op_gt(const Object&, const Object&);
+bool op_le(const Object&, const Object&);
+bool op_ge(const Object&, const Object&);
+bool op_asn(const Object&, const Object&);
 #endif
