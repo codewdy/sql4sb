@@ -1,9 +1,10 @@
 #include "manager.hpp"
 #include <vector>
 #include <iostream>
+#include <cstdio>
 
 int main() {
-    try {
+    std::remove("test");
     Manager manager;
     std::vector<Type> types;
     Type type(TYPE_INT, false, 4, "id");
@@ -12,9 +13,9 @@ int main() {
 
     std::vector<Object> objects;
     std::vector<std::vector<Object>> obj_vec;
-    int id = 4;
-    Object object(&id, 4, TYPE_INT, true);
-    objects.push_back(object);
+    LiteralManager lmanager;
+    Object obj4 = lmanager.GetInt(4);
+    objects.push_back(obj4);
     obj_vec.push_back(objects);
     std::string str = "test";
     manager.Insert(str, obj_vec);
@@ -25,22 +26,16 @@ int main() {
     ReadExpr lexpr("test", "id");
     Table* table = manager.getTable("test", false);
     lexpr.Use("test", "", &desc, NULL); 
-    LiteralManager lmanager;
-    Object obj = lmanager.GetInt(4);
-    LiteralExpr rexpr(obj);
+    LiteralExpr rexpr(obj4);
     Condition cond;
     cond.l = &lexpr;
     cond.r = &rexpr;
     cond.op = op_eq;
     std::vector<Condition> conds;
     conds.push_back(cond);
-    manager.Update(str, conds, lexpr, obj);  
+    //manager.Update(str, conds, lexpr, obj);  
 
     manager.Select("test", "", conds);
 
-    manager.Delete("test", conds);
-
-    } catch (const char* ex) {
-        std::cout << ex << std::endl;
-    }
+    //manager.Delete("test", conds);
 }

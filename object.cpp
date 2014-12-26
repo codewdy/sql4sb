@@ -55,7 +55,7 @@ void ReadExpr::Use(const std::string& lname, const std::string& rname, TableDesc
     if (tbl == "") {
         nullMask = 1;
         useLeft = true;
-        for ( int i=0; i<MaxCol; i++ ) {
+        for ( int i=0; i<ldesc->colSize; i++ ) {
             if ( name == ldesc->colType[i].name ) {
                 size = ldesc->colType[i].size;
                 return;
@@ -65,7 +65,7 @@ void ReadExpr::Use(const std::string& lname, const std::string& rname, TableDesc
             }
         }
         useLeft = false;
-         for ( int i=0; i<MaxCol; i++ ) {
+         for ( int i=0; i<rdesc->colSize; i++ ) {
             if ( name == rdesc->colType[i].name ) {
                 size = ldesc->colType[i].size;
                 return;
@@ -76,7 +76,7 @@ void ReadExpr::Use(const std::string& lname, const std::string& rname, TableDesc
         }
     } else if (tbl == lname) {
         useLeft = true;
-        for ( int i=0; i<MaxCol; i++ ) {
+        for ( int i=0; i<ldesc->colSize; i++ ) {
             if ( name == ldesc->colType[i].name ) {
                 size = ldesc->colType[i].size;
                 return;
@@ -87,7 +87,7 @@ void ReadExpr::Use(const std::string& lname, const std::string& rname, TableDesc
         }
     } else {
         useLeft = false;
-         for ( int i=0; i<MaxCol; i++ ) {
+         for ( int i=0; i<rdesc->colSize; i++ ) {
             if ( name == rdesc->colType[i].name ) {
                 size = ldesc->colType[i].size;
                 return;

@@ -21,8 +21,7 @@ int main() {
     delete tbl;
     tbl = new Table("test_table.db", false);
     std::set<int> x;
-    for (auto& info : tbl->usedRecords) {
-        void* rec = (char*)tbl->getPage(info->page_id) + info->offset;
+    for (auto& rec : tbl->usedRecords) {
         x.insert(*(int*)rec);
     }
     for (int i = 0; i < 1000; i++)

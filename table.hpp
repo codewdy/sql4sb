@@ -19,7 +19,7 @@ struct Type {
         type = t;
         null = n;
         size = s;
-        std::memcpy(name, name_, sizeof(n));
+        std::memcpy(name, name_, NAME_LEN);
     }
 };
 const int MaxCol = (PAGE_SIZE - 16) / sizeof(Type);
@@ -47,7 +47,7 @@ struct Table {
     static const int RowBitmapSize = 2;
     std::string filename;
     std::unordered_map<void*, Info*> recordInfoMap;
-    std::unordered_set<Info*> usedRecords, emptyRecords;
+    std::unordered_set<void*> usedRecords, emptyRecords;
     std::map<void*, int> pageIndex;
     std::vector<void*> pages;
     std::set<int> dirtyPages;

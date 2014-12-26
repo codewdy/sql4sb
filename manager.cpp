@@ -72,7 +72,7 @@ void WriteRow(void* rec, const TableDesc& desc) {
 }
 
 void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds){
-    if ( tbl2 != "" ) {
+    if ( tbl2 == "" ) {
         auto filtered = filterOne(tbl1, conds);
         auto table = getTable(tbl1, false);
         for (auto row : filtered)
@@ -124,22 +124,27 @@ void Manager::DropTable(const std::string& tbl) {
 Table* Manager::getTable(const std::string& tbl, bool init){
     if (init) {
         auto& ptbl = tables[tbl];
-        if (ptbl == nullptr)
-            ptbl = new Table(tbl);
-        return ptbl;
-    } else {
-        auto& ptbl = tables[tbl];
         if (ptbl == nullptr) {
             ptbl = new Table(tbl, true);
             return ptbl;
         }
-        throw "Table Already Exist!";
+        throw "Table Already Exist";
+    } else {
+        auto& ptbl = tables[tbl];
+        if (ptbl == nullptr) {
+            ptbl = new Table(tbl, true);
+        }
+        return ptbl;
     }
 }
 
 std::vector<void*> Manager::filterOne(const std::string& tbl, const std::vector<Condition>& conds) {
     std::vector<void*> filtered;
     Table* table = getTable(tbl, false);
+    for (int k = 0; k < conds.size(); k++) {
+        conds[k].l->Use(tbl, "", &table->head->desc);
+        conds[k].r->Use(tbl, "", &table->head->desc);
+    }
     for ( auto record : table->usedRecords ) {
        for (int k = 0; k<conds.size(); k++ ) {
            Expr *l = conds[k].l;

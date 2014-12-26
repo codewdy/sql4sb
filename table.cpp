@@ -1,5 +1,6 @@
 #include "table.hpp"
 #include <fstream>
+#include <iostream>
 
 Table::Table(const std::string& _filename, bool init) : filename(_filename) {
     std::ifstream in(filename, std::ios::in | std::ios::binary);
@@ -45,9 +46,9 @@ Table::Table(const std::string& _filename, bool init) : filename(_filename) {
                 void* rec = (char*)pages[info->page_id] + info->offset;
                 recordInfoMap[rec] = info;
                 if (info->free)
-                    emptyRecords.insert(info);
+                    emptyRecords.insert(rec);
                 else
-                    usedRecords.insert(info);
+                    usedRecords.insert(rec);
             }
             LastInfoPage = infos;
         }
@@ -91,23 +92,25 @@ void* Table::genNewRecord() {
             info->page_id = new_page;
             info->offset = i;
             info->free = true;
-            recordInfoMap[page + i] = info;
-            emptyRecords.insert(info);
+            void* rec = page + info->offset;
+            emptyRecords.insert(rec);
+            recordInfoMap[rec] = info;
         }
         setDirty(LastInfoPage);
     }
-    Info* info = (Info*)*emptyRecords.begin();
+    Info* info = recordInfoMap[*emptyRecords.begin()];
+    void* rec = (char*)getPage(info->page_id) + info->offset;
     info->free = false;
-    emptyRecords.erase(info);
-    usedRecords.insert(info);
+    emptyRecords.erase(rec);
+    usedRecords.insert(rec);
     setDirty(info);
-    return (char*)getPage(info->page_id) + info->offset;
+    return rec;
 }
 void Table::removeRecord(void* rec) {
     Info* info = recordInfoMap[rec];
     info->free = true;
-    emptyRecords.insert(info);
-    usedRecords.erase(info);
+    emptyRecords.insert(rec);
+    usedRecords.erase(rec);
 }
 int Table::newPage() {
     char* buf = new char[PAGE_SIZE];
