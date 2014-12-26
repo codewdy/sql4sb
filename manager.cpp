@@ -93,6 +93,16 @@ void Manager::DropTable(const std::string& tbl) {
 
 }
 
+std::Manager::getTable(const std::string& tbl, bool init){
+    if (init) {
+        if (tables.find(tbl) != tables.end())
+            return tables[tbl];
+        else {
+        }
+    } else {
+        // ?
+    }
+}
 
 std::vector<void*> Manager::filterOne(const std::string& tbl, const std::vector<Condition>& conds) {
     std::vector<void*> filtered;
