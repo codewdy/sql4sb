@@ -40,6 +40,7 @@ struct Table {
     std::unordered_map<int, void*> pages;
     std::unordered_set<void*> dirtyPages;
     int rowSize;
+    TableDesc* desc;
     Table(const std::string& _filename, bool init = false);
     void setDirty(void* dst);
     void writeback();
