@@ -12,7 +12,7 @@ struct Manager {
     std::string tblFileName(const std::string& tbl);
     Table* getTable(const std::string& tbl, bool init);
     std::vector<void*> filterOne(const std::string& tbl, const std::vector<Condition>& conds);
-    std::vector<std::pair<void*, void*>> filterTwo(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds);
+    std::vector<std::pair<void*, void*> > filterTwo(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds);
     void Insert(const std::string& tbl, const std::vector<std::vector<Object>>& rows);
     void Delete(const std::string& tbl, const std::vector<Condition>& conds);
     void Select(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds);

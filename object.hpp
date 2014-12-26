@@ -8,6 +8,13 @@ struct Object {
     int size;
     TYPE type;
     bool is_null;
+    Object(){};
+    Object(void* location, int s, TYPE t, bool null) {
+        loc = location;
+        size = s;
+        type = t;
+        is_null = null;
+    }
 };
 struct LiteralManager {
     Object GetInt(int l);

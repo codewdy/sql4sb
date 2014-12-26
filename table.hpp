@@ -14,6 +14,13 @@ struct Type {
     bool null;
     int size;
     char name[NAME_LEN];
+    Type(){};
+    Type(TYPE t, bool n, int s, char* name_) {
+        type = t;
+        null = n;
+        size = s;
+        std::memcpy(name, name_, sizeof(n));
+    }
 };
 const int MaxCol = (PAGE_SIZE - 16) / sizeof(Type);
 struct TableDesc {

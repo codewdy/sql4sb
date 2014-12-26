@@ -153,7 +153,7 @@ bool op_lt(const Object& lobj, const Object& robj){
     }
 }
 
-bool op_ge(const Object& lobj, const Object& robj){
+bool op_gt(const Object& lobj, const Object& robj){
         if ( lobj.type != robj.type ) {
         throw "Type Error";
         return false;
