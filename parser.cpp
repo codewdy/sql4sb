@@ -28,18 +28,38 @@ char* getNextStr(char*& str) {
     return res;
 }
 
-Stmt* parse(char* sql){
+Stmt* Parser::parse(char* sql){
     char* type = getNextStr(sql);
-    if ( std::strcmp(type, "select") == 0 )
-        parseSelect(sql);
+    if ( std::strcmp(type, "select") == 0 ) {
+        return parseSelect(sql);
+    } else if (std::strcmp(type, "create") == 0) {
+        char* table = getNextStr(sql);
+        if (std::strcmp(table, "table") == 0) {
+            return parseCreateTable(sql);
+        } else {
+            return parseCreateDB(sql);
+        }
+    }
 }
 
-Stmt* parseCreateDB(char* str){
+Stmt* Parser::parseCreateTable(char* sql) {
+    char* table = getNextStr(sql);
+    CreateTableStmt stmt;
+    std::string tbl(table);
+    stmt.tbl = tbl;
+    return &stmt;
 }
+
+Stmt* Parser::parseCreateDB(char* str){
+}
+
+Stmt* Parser::parseSelect(char* str){
+}
+
 
 
 int main() {
-    char* hello = "  hello  = test   ";
+    char* hello = "create table test";
     while ( !isEmpty(hello) ) {
         std::cout << getNextStr(hello) << std::endl;
     }

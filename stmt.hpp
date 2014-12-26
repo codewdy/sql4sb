@@ -31,6 +31,7 @@ struct UpdateStmt : public Stmt {
 struct CreateTableStmt : public Stmt {
     std::string tbl;
     std::vector<Type> types;
+    ~CreateTableStmt() {};
     virtual void Run(Manager& manager);
 };
 struct DropTableStmt : public Stmt {
