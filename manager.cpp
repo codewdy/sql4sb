@@ -1,9 +1,15 @@
 #include <iostream>
 #include <cstdlib>
+#include <fstream>
 
 #include "manager.hpp"
 #include "table.hpp"
 #include "object.hpp"
+
+struct DBInfo {
+    int tableCount;
+    char tables[20][20];
+};
 
 void checkType(Type type, const Object& obj) {
 }
@@ -20,6 +26,19 @@ void WriteBinRow(void* buf, const TableDesc& desc, const std::vector<Object>& ob
         nullMask <<= 1;
         (char*&)iter += desc.colType[i].size;
     }
+}
+
+Manager::Manager() {
+    dbName = "test";
+    DBInfo info;
+    info.tableCount = 0;
+    std::fstream out("test.dbx", std::ios::in | std::ios::binary);
+    if (!out) {
+        out.close();
+        out.open("test.dbx", std::ios::out | std::ios::binary | std::ios::trunc);
+        out.write((char*)(void*)&info, sizeof(info));
+    }
+    out.close();
 }
 
 std::string Manager::tblFileName(const std::string& tbl) {
@@ -52,11 +71,13 @@ void Manager::Delete(const std::string& tbl, const std::vector<Condition>& conds
     table->writeback();
 }
 
-void WriteRow(void* rec, const TableDesc& desc) {
+void WriteRow(void* rec, const TableDesc& desc, std::set<std::string>* sel) {
     unsigned short nullmap = *(unsigned short*)rec;
     (char*&)rec += 2;
     for (int i = 0; i < desc.colSize; i++) {
         const Type& t = desc.colType[i];
+        if (sel && sel->find(t.name) == sel->end())
+            continue;
         if (nullmap & (1 << i)) {
             std::cout << "NULL ";
         } else {
@@ -75,12 +96,12 @@ void WriteRow(void* rec, const TableDesc& desc) {
     }
 }
 
-void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds){
+void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds, std::set<std::string>* sel){
     if ( tbl2 == "" ) {
         auto filtered = filterOne(tbl1, conds);
         auto table = getTable(tbl1, false);
         for (auto row : filtered) {
-            WriteRow(row, table->head->desc);
+            WriteRow(row, table->head->desc, sel);
             std::cout << std::endl;
         }
     } else {
@@ -88,8 +109,8 @@ void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std
         auto table1 = getTable(tbl1, false);
         auto table2 = getTable(tbl2, false);
         for (auto row : filtered) {
-            WriteRow(row.first, table1->head->desc);
-            WriteRow(row.second, table2->head->desc);
+            WriteRow(row.first, table1->head->desc, sel);
+            WriteRow(row.second, table2->head->desc, sel);
             std::cout << std::endl;
         }
     }
@@ -127,12 +148,58 @@ void Manager::CreateTable(const std::string& tbl, const std::vector<Type>& types
     }
     table->setDirty(0);
     table->writeback();
+    std::fstream dbf(dbName + ".dbx", std::ios::in | std::ios::out | std::ios::binary);
+    DBInfo info;
+    dbf.read((char*)(void*)&info, sizeof(info));
+    strcpy(info.tables[info.tableCount++], tbl.c_str());
+    dbf.seekp(0);
+    dbf.write((char*)(void*)&info, sizeof(info));
 }
 
 
 void Manager::DropTable(const std::string& tbl) {
     tables.erase(tblFileName(tbl));
     std::remove(tblFileName(tbl).c_str());
+    std::fstream dbf(dbName + ".dbx", std::ios::in | std::ios::out | std::ios::binary);
+    DBInfo info;
+    dbf.read((char*)(void*)&info, sizeof(info));
+    for (int i = 0; i < info.tableCount; i++)
+        if (info.tables[i] == tbl)
+            memcpy(info.tables[i], info.tables[--info.tableCount], 20);
+    dbf.seekp(0);
+    dbf.write((char*)(void*)&info, sizeof(info));
+}
+
+void Manager::ShowTables() {
+    std::fstream dbf(dbName + ".dbx", std::ios::in | std::ios::out | std::ios::binary);
+    DBInfo info;
+    dbf.read((char*)(void*)&info, sizeof(info));
+    for (int i = 0; i < info.tableCount; i++)
+        std::cout << info.tables[i] << std::endl;
+}
+
+void Manager::CreateDB(const std::string& dbName) {
+    std::fstream out(dbName + ".dbx", std::ios::out | std::ios::binary | std::ios::trunc);
+    DBInfo info;
+    info.tableCount = 0;
+    out.write((char*)(void*)&info, sizeof(info));
+    out.close();
+}
+
+void Manager::DropDB(const std::string& dbName) {
+    std::remove((dbName + ".dbx").c_str());
+}
+
+void Manager::Desc(const std::string& tbl) {
+    Table* table = getTable(tbl, false);
+    for (int i = 0; i < table->head->desc.colSize; i++) {
+        std::cout << table->head->desc.colType[i].name;
+        if (table->head->desc.colType[i].type == TYPE_INT)
+            std::cout << " INT";
+        else
+            std::cout << " STRING";
+        std::cout << std::endl;
+    }
 }
 
 Table* Manager::getTable(const std::string& tbl, bool init){
