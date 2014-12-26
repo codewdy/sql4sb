@@ -51,7 +51,7 @@ Table::Table(const std::string& _filename, bool init) : filename(_filename) {
             }
             LastInfoPage = infos;
         }
-        rowSize = 0;
+        rowSize = Table::RowBitmapSize;
         for (int i = 0; i < head->desc.colSize; i++)
             rowSize += head->desc.colType[i].size;
     }

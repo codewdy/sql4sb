@@ -9,29 +9,26 @@ void checkType(Type type, const Object& obj) {
     //TODO
 }
 
-void* WriteObj(void* buf, Type type, const Object& obj) {
-    memcpy(buf, obj.loc, obj.size);
-    memset((char*)buf + obj.size, 0, type.size - obj.size);
-    return (char*)buf + type.size;
+void WriteBinRow(void* buf, const TableDesc& desc, const std::vector<Object>& objs) {
+    //TODO
 }
 
 void Manager::Insert(const std::string& tbl, const std::vector<std::vector<Object>>& rows) {
     auto tblX = getTable(tbl, false);
     for (auto row : rows) {
-        if (row.size() != tblX->desc->colSize) {
+        if (row.size() != tblX->head->desc.colSize) {
             throw "Column Size Error;";
         }
         for (int i = 0; i < row.size(); i++) {
-            checkType(tblX->desc->colType[i], row[i]);
+            checkType(tblX->head->desc.colType[i], row[i]);
         }
     }
     for (auto row : rows) {
         void* rec = (char*)tblX->genNewRecord();
         tblX->setDirty(rec);
-        for (int i = 0; i < row.size(); i++) {
-            rec = WriteObj(rec, tblX->desc->colType[i], row[i]);
-        }
+        WriteBinRow(rec, tblX->head->desc, row);
     }
+    tblX->writeback();
 }
 void Manager::Delete(const std::string& tbl, const std::vector<Condition>& conds){
     Table* table = getTable(tbl, false);
@@ -39,18 +36,41 @@ void Manager::Delete(const std::string& tbl, const std::vector<Condition>& conds
     for ( const auto& record : filtered) {
         table->removeRecord(record);
     }
+    table->writeback();
+}
+
+void WriteRow(void* rec, const TableDesc& desc) {
+    unsigned short nullmap = *(unsigned short*)rec;
+    (char*&)rec += 2;
+    for (int i = 0; i < desc.colSize; i++) {
+        const Type& t = desc.colType[i];
+        if (nullmap & (1 << i)) {
+            std::cout << "NULL ";
+        } else {
+            switch (t.type) {
+                case TYPE_INT:
+                    std::cout << *(int*)rec << " ";
+                    break;
+                case TYPE_VARCHAR:
+                    for (char* p = (char*)rec; *p && p != (char*)rec + t.size; p++)
+                        std::cout << *p;
+                    std::cout << " ";
+                    break;
+            };
+        }
+        (char*&)rec += t.size;
+    }
 }
 
 void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds){
-    std::vector<void*> filtered;
     if ( tbl2 != "" ) {
-        filtered = filterOne(tbl1, conds);
+        auto filtered = filterOne(tbl1, conds);
+        auto table = getTable(tbl1, false);
+        for (auto row : filtered)
+            WriteRow(row, table->head->desc);
     } else {
-        filtered = filterTwo(tbl1, tbl2, conds);
+        auto filtered = filterTwo(tbl1, tbl2, conds);
     }
-
-    // TODO :
-    // 输出
 }
 
 void Manager::Update(const std::string& tbl, const std::vector<Condition>& conds, ReadExpr& lv, const Object& rv){
@@ -58,7 +78,7 @@ void Manager::Update(const std::string& tbl, const std::vector<Condition>& conds
     for ( void* record : filtered ) {
         Object obj = lv.getObj(record);
         TYPE type = obj.type;
-        WriteObj(&obj, type, rv);
+        //WriteObj(&obj, type, rv);
        
     }
 }
@@ -69,23 +89,15 @@ void Manager::Use(const std::string& db) {
 }
 
 
-void Manager::CreateTable(const std::string& tbl, const std::vector<TYPE>& types){
-    Table table(tbl, true);
-    HeadPage headpage;
-    headpage.pageCount = 0;
-    headpage.infoHeadPage = 0;
-    
-    TableDesc desc;
-    desc.colSize = types.size();
+void Manager::CreateTable(const std::string& tbl, const std::vector<Type>& types){
+    Table* table = getTable(tbl, true);
+    table->head->desc.colSize = types.size();
+    table->rowSize = Table::RowBitmapSize;
     for ( int i=0; i<types.size(); i++ ) {
-        desc.colType[i] = types[i];
+        table->head->desc.colType[i] = types[i];
+        table->rowSize += types[i].size;
     }
-
-    headpage.desc = desc;
-
-    table.pages[0] = &headpage;
-    table.dirtyPages.insert(&headpage);
-    
+    table->setDirty(0);
 }
 
 
@@ -93,14 +105,19 @@ void Manager::DropTable(const std::string& tbl) {
 
 }
 
-std::Manager::getTable(const std::string& tbl, bool init){
+Table* Manager::getTable(const std::string& tbl, bool init){
     if (init) {
-        if (tables.find(tbl) != tables.end())
-            return tables[tbl];
-        else {
-        }
+        auto& ptbl = tables[tbl];
+        if (ptbl == nullptr)
+            ptbl = new Table(tbl);
+        return ptbl;
     } else {
-        // ?
+        auto& ptbl = tables[tbl];
+        if (ptbl == nullptr) {
+            ptbl = new Table(tbl, true);
+            return ptbl;
+        }
+        throw "Table Already Exist!";
     }
 }
 
@@ -111,16 +128,17 @@ std::vector<void*> Manager::filterOne(const std::string& tbl, const std::vector<
        for (int k = 0; k<conds.size(); k++ ) {
            Expr *l = conds[k].l;
            Expr *r = conds[k].r;
-           if (conds[k].op(l->getObj(record, NULL), r->getObj(record, NULL))) {
+           if (conds[k].op(l->getObj(record, nullptr), r->getObj(record, nullptr))) {
                filtered.push_back(record);
            }
        }
     }
+    return std::move(filtered);
 }
 
 
-std::vector<void*> Manager::filterTwo(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds) {
-    std::vector<void*> filtered;
+std::vector<std::pair<void*, void*>> Manager::filterTwo(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds) {
+    std::vector<std::pair<void*, void*>> filtered;
     Table* table1 = getTable(tbl1, false);
     Table* table2 = getTable(tbl2, false);
     for ( auto record1 : table1->usedRecords ) {
@@ -130,10 +148,11 @@ std::vector<void*> Manager::filterTwo(const std::string& tbl1, const std::string
                 Expr *r = conds[k].r;
                 if (conds[k].op(l->getObj(record1, record2),
                             r->getObj(record1, record2))) {
-                    std::pair<void*, void*> rec(record1, record2); 
-                    filtered.push_back(&rec);
-           }
-       }
+                    filtered.push_back(std::make_pair(record1, record2));
+                }
+            }
+        }
     }
+    return std::move(filtered);
 }
 

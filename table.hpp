@@ -14,11 +14,6 @@ struct Type {
     bool null;
     int size;
     char name[NAME_LEN];
-    void operator = (Type& ty) {
-        type = ty.type;
-        null = ty.null;
-        size = ty.size;
-    }
 };
 const int MaxCol = (PAGE_SIZE - 16) / sizeof(Type);
 struct TableDesc {
@@ -42,6 +37,7 @@ struct InfoPage {
     Info infos[MaxInfo];
 };
 struct Table {
+    static const int RowBitmapSize = 2;
     std::string filename;
     std::unordered_map<void*, Info*> recordInfoMap;
     std::unordered_set<Info*> usedRecords, emptyRecords;
