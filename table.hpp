@@ -10,6 +10,11 @@ struct Type {
     TYPE type;
     bool null;
     int size;
+    void operator = (Type& ty) {
+        type = ty.type;
+        null = ty.null;
+        size = ty.size;
+    }
 };
 const int MaxCol = (PAGE_SIZE - 16) / sizeof(Type);
 struct TableDesc {

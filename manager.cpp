@@ -3,6 +3,7 @@
 
 #include "manager.hpp"
 #include "table.hpp"
+#include "object.hpp"
 
 void checkType(Type type, const Object& obj) {
     //TODO
@@ -36,8 +37,58 @@ void Manager::Delete(const std::string& tbl, const std::vector<Condition>& conds
     Table* table = getTable(tbl, false);
     std::vector<void*> filtered = filterOne(tbl, conds);
     for ( const auto& record : filtered) {
-        Info* info = table->recordInfoMap[record];
-        info->free = true;
+        table->removeRecord(record);
     }
 }
 
+void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds){
+    std::vector<void*> filtered;
+    if ( tbl2 != "" ) {
+        filtered = filterOne(tbl1, conds);
+    } else {
+        filtered = filterTwo(tbl1, tbl2, conds);
+    }
+
+    // TODO :
+    // 输出
+}
+
+void Manager::Update(const std::string& tbl, const std::vector<Condition>& conds, const ReadExpr& lv, const Object& rv){
+    std::vector<void*> filtered = filterOne(tbl, conds);
+    for ( void* record : filtered ) {
+        Object obj = lv.getObj(record);
+        TYPE type = obj.type;
+        WriteObj(&obj, type, rv);
+       
+    }
+}
+
+
+void Manager::Use(const std::string& db) {
+    dbName = db;
+}
+
+
+void Manager::CreateTable(const std::string& tbl, const std::vector<TYPE>& types){
+    Table table(tbl, true);
+    HeadPage headpage;
+    headpage.pageCount = 0;
+    headpage.infoHeadPage = 0;
+    
+    TableDesc desc;
+    desc.colSize = types.size();
+    for ( int i=0; i<types.size(); i++ ) {
+        desc.colType[i] = types[i];
+    }
+
+    headpage.desc = desc;
+
+    table.pages[0] = &headpage;
+    table.dirtyPages.insert(&headpage);
+    
+}
+
+
+void Manager::DropTable(const std::string& tbl) {
+
+}
