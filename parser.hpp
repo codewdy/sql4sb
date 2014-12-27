@@ -32,6 +32,12 @@ struct Parser {
     DeleteStmt* parseDelete(TokenIter beg, TokenIter end);
     UpdateStmt* parseUpdate(TokenIter beg, TokenIter end);
     InsertStmt* parseInsert(TokenIter beg, TokenIter end);
+    ShowTblStmt* parseInsert(TokenIter beg, TokenIter end);
+    DescStmt* parseInsert(TokenIter beg, TokenIter end);
+    CreateTableStmt* parseInsert(TokenIter beg, TokenIter end);
+    DropTableStmt* parseInsert(TokenIter beg, TokenIter end);
+    CreateDBStmt* parseInsert(TokenIter beg, TokenIter end);
+    DropDBStmt* parseInsert(TokenIter beg, TokenIter end);
     
     std::pair<std::string, std::string> parseFrom(TokenIter beg, TokenIter end);
     std::vector<Condition> parseWhere(TokenIter beg, TokenIter end);
