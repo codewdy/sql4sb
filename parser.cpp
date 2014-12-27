@@ -150,6 +150,9 @@ SelectStmt* Parser::parseSelect(Parser::TokenIter beg, Parser::TokenIter end) {
     ret->conds = std::move(where);
     return ret;
 }
+InsertStmt* Parser::parseInsert(Parser::TokenIter beg, Parser::TokenIter end) {
+    
+}
 std::pair<std::string, std::string> Parser::parseFrom(Parser::TokenIter beg, Parser::TokenIter end) {
     auto COMMA = findToken(beg, end, Token::OPER, ",");
     if (COMMA == end)

@@ -178,6 +178,7 @@ void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std
 void Manager::Update(const std::string& tbl, const std::vector<Condition>& conds, ReadExpr& lv, const Object& rv){
     std::vector<void*> filtered = filterOne(tbl, conds);
     Table* table = getTable(tbl, false);
+    lv.Use(tbl, "", &table->head->desc);
     
     std::vector<bool> write;
     for ( int i=0; i<table->head->desc.colSize; i++ )

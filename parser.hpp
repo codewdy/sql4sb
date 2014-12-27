@@ -15,6 +15,8 @@ struct Token {
         WHERE,
         FROM,
         AND,
+        INTO,
+        VALUES,
     } token;
     std::string raw;
 };
@@ -29,7 +31,7 @@ struct Parser {
     SelectStmt* parseSelect(TokenIter beg, TokenIter end);
     DeleteStmt* parseDelete(TokenIter beg, TokenIter end);
     UpdateStmt* parseUpdate(TokenIter beg, TokenIter end);
-    //InsertStmt* parseInsert(TokenIter beg, TokenIter end);
+    InsertStmt* parseInsert(TokenIter beg, TokenIter end);
     
     std::pair<std::string, std::string> parseFrom(TokenIter beg, TokenIter end);
     std::vector<Condition> parseWhere(TokenIter beg, TokenIter end);
