@@ -32,6 +32,19 @@ void UseStmt::Run(Manager& manager) {
     manager.Use(db);
 }
 
+void ShowTblStmt::Run(Manager& manager) {
+    manager.ShowTables();
+}
+
+void DescStmt::Run(Manager& manager) {
+    manager.Desc(tbl);
+}
+
+void CreateDBStmt::Run(Manager& manager) {
+    manager.CreateDB(db);
+}
+
+
 void DropDBStmt::Run(Manager& manager) {
     manager.DropDB(db);
 }

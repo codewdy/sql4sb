@@ -52,5 +52,13 @@ struct DropDBStmt : public Stmt {
     virtual void Run(Manager& manager);
 };
 
+struct ShowTblStmt : public Stmt {
+    virtual void Run(Manager& manager);
+};
+struct DescStmt : public Stmt {
+    std::string tbl;
+    virtual void Run(Manager& manager);
+};
+
 #endif
 

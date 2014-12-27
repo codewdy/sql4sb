@@ -3,7 +3,14 @@
 #include "stmt.hpp"
 struct Token {
     enum Type {
+        USE,
+        DROP,
+        DATABASE,
+        TABLE,
         SET,
+        CREATE,
+        SHOW,
+        DESC,
         DELETE,
         UPDATE,
         INSERT,
@@ -32,12 +39,13 @@ struct Parser {
     DeleteStmt* parseDelete(TokenIter beg, TokenIter end);
     UpdateStmt* parseUpdate(TokenIter beg, TokenIter end);
     InsertStmt* parseInsert(TokenIter beg, TokenIter end);
-    ShowTblStmt* parseInsert(TokenIter beg, TokenIter end);
-    DescStmt* parseInsert(TokenIter beg, TokenIter end);
-    CreateTableStmt* parseInsert(TokenIter beg, TokenIter end);
-    DropTableStmt* parseInsert(TokenIter beg, TokenIter end);
-    CreateDBStmt* parseInsert(TokenIter beg, TokenIter end);
-    DropDBStmt* parseInsert(TokenIter beg, TokenIter end);
+    ShowTblStmt* parseShow(TokenIter beg, TokenIter end);
+    DescStmt* parseDesc(TokenIter beg, TokenIter end);
+    CreateTableStmt* parseCreateTable(TokenIter beg, TokenIter end);
+    DropTableStmt* parseDropTable(TokenIter beg, TokenIter end);
+    CreateDBStmt* parseCreateDB(TokenIter beg, TokenIter end);
+    DropDBStmt* parseDropDB(TokenIter beg, TokenIter end);
+    UseStmt* parseUse(TokenIter beg, TokenIter end);
     
     std::pair<std::string, std::string> parseFrom(TokenIter beg, TokenIter end);
     std::vector<Condition> parseWhere(TokenIter beg, TokenIter end);

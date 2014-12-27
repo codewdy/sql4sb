@@ -10,6 +10,13 @@ Stmt* Parser::parse(const std::string& sql) {
     return parseSQL(l.begin(), l.end());
 }
 static const std::unordered_map<std::string, Token::Type> specialToken = {
+    {"use", Token::USE},
+    {"drop", Token::DROP},
+    {"create", Token::CREATE},
+    {"table", Token::TABLE},
+    {"databases", Token::DATABASE},
+    {"show", Token::SHOW},
+    {"desc", Token::DESC},
     {"insert", Token::INSERT},
     {"into", Token::INTO},
     {"values", Token::VALUES},
@@ -101,6 +108,26 @@ Stmt* Parser::parseSQL(Parser::TokenIter beg, Parser::TokenIter end) {
             return parseUpdate(beg + 1, end);
         case Token::INSERT:
             return parseInsert(beg + 1, end);
+        case Token::USE:
+            return parseUse(beg + 1, end);
+        case Token::SHOW:
+            return parseShow(beg + 1, end);
+        case Token::DESC:
+            return parseDesc(beg + 1, end);
+        case Token::CREATE:
+            beg = beg + 1;
+            if (beg->token == Token::TABLE) {
+                return parseCreateTable(beg + 1, end);
+            } else {
+                return parseCreateDB(beg + 1, end);
+            }
+        case Token::DROP:
+            beg = beg + 1;
+            if (beg->token == Token::TABLE) {
+                return parseDropTable(beg + 1, end);
+            } else {
+                return parseDropDB(beg + 1, end);
+            }
             
         default:
             throw "Syntax Error";
@@ -204,6 +231,47 @@ Condition Parser::parseCond(Parser::TokenIter beg, Parser::TokenIter end) {
     }
     ret.l = parseExpr(beg, OPER);
     ret.r = parseExpr(OPER + 1, end);
+    return ret;
+}
+
+ShowTblStmt* Parser::parseShow(TokenIter beg, TokenIter end){
+    ShowTblStmt* ret = new ShowTblStmt;
+    return ret;
+}
+
+DescStmt* Parser::parseDesc(TokenIter beg, TokenIter end){
+    DescStmt* ret = new DescStmt;
+    ret->tbl = beg->raw;
+    return ret;
+}
+
+CreateTableStmt* Parser::parseCreateTable(TokenIter beg, TokenIter end){
+    CreateTableStmt* ret = new CreateTableStmt;
+    return ret;
+}
+
+DropTableStmt* Parser::parseDropTable(TokenIter beg, TokenIter end){
+    DropTableStmt* ret = new DropTableStmt;
+    ret->tbl = beg->raw;
+    return ret;
+}
+
+CreateDBStmt* Parser::parseCreateDB(TokenIter beg, TokenIter end){
+    CreateDBStmt* ret = new CreateDBStmt;
+    ret->db = beg->raw;
+    return ret;
+}
+
+UseStmt* Parser::parseUse(TokenIter beg, TokenIter end){
+    UseStmt* ret = new UseStmt;
+    ret->db = beg->raw;
+    return ret;
+}
+
+
+DropDBStmt* Parser::parseDropDB(TokenIter beg, TokenIter end){
+    DropDBStmt* ret = new DropDBStmt;
+    ret->db = beg->raw;
     return ret;
 }
 

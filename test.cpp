@@ -84,17 +84,25 @@ int main() {
     conds.push_back(cond);
     // three conditions two tables
     //manager.Select("table1", "table2", conds);
-
     //manager.Desc("table1");
-
     //manager.ShowTables();
-
     Parser p;
+    /*
     p.parse("select * from table1")->Run(manager);
     p.parse("update table1 set id = 1 where name = 'fine'")->Run(manager);
     p.parse("select * from table1")->Run(manager);
     p.parse("insert into table1 values (12, 'aaa'), (21, 'wangyan')")->Run(manager);
     p.parse("select * from table1")->Run(manager);
+*/
+
+    p.parse("create database wyy")->Run(manager);
+    p.parse("create database wyyy")->Run(manager);
+    p.parse("use test")->Run(manager);
+    p.parse("show tables")->Run(manager);
+    p.parse("drop table table2")->Run(manager);
+    p.parse("show tables")->Run(manager);
+    p.parse("desc table1")->Run(manager);
+    p.parse("drop database wyyy")->Run(manager);
 
     //manager.Delete("test", conds);
 }
