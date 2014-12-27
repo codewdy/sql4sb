@@ -179,14 +179,8 @@ void Manager::Update(const std::string& tbl, const std::vector<Condition>& conds
     std::vector<void*> filtered = filterOne(tbl, conds);
     Table* table = getTable(tbl, false);
     lv.Use(tbl, "", &table->head->desc);
-    
-    std::vector<bool> write;
-    for ( int i=0; i<table->head->desc.colSize; i++ )
-        write.push_back(true);
 
     for ( void* record : filtered ) {
-        WriteRow(record, table->head->desc, write);
-        
         if (rv.is_null) {
             *(unsigned short*)record |= lv.nullMask;
         } else {

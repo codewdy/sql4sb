@@ -6,12 +6,13 @@
 
 
 Stmt* Parser::parse(const std::string& sql) {
-    std::cout << "ok";
-    
     TokenList l  = tokenize(sql);
     return parseSQL(l.begin(), l.end());
 }
 static const std::unordered_map<std::string, Token::Type> specialToken = {
+    {"insert", Token::INSERT},
+    {"into", Token::INTO},
+    {"values", Token::VALUES},
     {"update", Token::UPDATE},
     {"set", Token::SET},
     {"select", Token::SELECT},
@@ -31,7 +32,7 @@ static const std::unordered_set<char> IDChar = {
     '_',
 };
 static const std::unordered_set<std::string> Op = {
-    ">", "<", "=", "!=", ">=", "<=", ",", "*"
+    ">", "<", "=", "!=", ">=", "<=", ",", ".",  "*", "(", ")",
 };
 static std::string toLower(const std::string& str) {
     std::string ret;
@@ -45,8 +46,6 @@ static std::string toLower(const std::string& str) {
     return std::move(ret);
 }
 Parser::TokenList Parser::tokenize(const std::string& sql) {
-    std::cout << "ok";
-    
     TokenList ret;
     auto iter = sql.begin();
     while (true) {
@@ -93,8 +92,6 @@ Parser::TokenList Parser::tokenize(const std::string& sql) {
     return ret;
 }
 Stmt* Parser::parseSQL(Parser::TokenIter beg, Parser::TokenIter end) {
-    std::cout << "ok";
-    
     switch (beg->token) {
         case Token::SELECT:
             return parseSelect(beg + 1, end);
@@ -103,7 +100,7 @@ Stmt* Parser::parseSQL(Parser::TokenIter beg, Parser::TokenIter end) {
         case Token::UPDATE:
             return parseUpdate(beg + 1, end);
         case Token::INSERT:
-        //    return parseInsert(beg + 1, end);
+            return parseInsert(beg + 1, end);
             
         default:
             throw "Syntax Error";
@@ -111,11 +108,9 @@ Stmt* Parser::parseSQL(Parser::TokenIter beg, Parser::TokenIter end) {
 }
 
 UpdateStmt* Parser::parseUpdate(Parser::TokenIter beg, Parser::TokenIter end) {
-    std::cout << "ok";
     auto setLoc = findToken(beg, end, Token::SET);
     auto whereLoc = findToken(setLoc, end, Token::WHERE);
     auto tablename = parseTableName(beg, setLoc);
-    std::cout << tablename;
     auto set = parseSet(setLoc + 1, whereLoc);
     auto where = parseWhere(whereLoc + 1, end);
     UpdateStmt* ret = new UpdateStmt;
@@ -151,7 +146,10 @@ SelectStmt* Parser::parseSelect(Parser::TokenIter beg, Parser::TokenIter end) {
     return ret;
 }
 InsertStmt* Parser::parseInsert(Parser::TokenIter beg, Parser::TokenIter end) {
-    
+    InsertStmt* ret = new InsertStmt;
+    ret->tbl = (beg + 1)->raw;
+    ret->rows = Parser::parseRows(beg + 3, end);
+    return ret;
 }
 std::pair<std::string, std::string> Parser::parseFrom(Parser::TokenIter beg, Parser::TokenIter end) {
     auto COMMA = findToken(beg, end, Token::OPER, ",");
@@ -167,7 +165,7 @@ std::string Parser::parseTableName(Parser::TokenIter beg, Parser::TokenIter end)
 
 std::vector<Condition> Parser::parseWhere(Parser::TokenIter beg, Parser::TokenIter end) {
     std::vector<Condition> ret;
-    if (beg != end) {
+    if (beg < end) {
         while (true) {
             auto COMMA = findToken(beg, end, Token::AND);
             ret.push_back(parseCond(beg, COMMA));
@@ -240,6 +238,27 @@ Expr* Parser::parseExpr(Parser::TokenIter beg, Parser::TokenIter end) {
     } else {
         throw "Syntax Error";
     }
+}
+std::vector<std::vector<Object>> Parser::parseRows(Parser::TokenIter beg, Parser::TokenIter end) {
+    std::vector<std::vector<Object>> ret;
+    auto iter = beg, XBeg = beg;
+    bool eor = false;
+    while (XBeg != end) {
+        iter = findToken(XBeg, end, Token::OPER, ")");
+        ret.push_back(parseRow(XBeg + 1, iter));
+        XBeg = findToken(iter, end, Token::OPER, "(");
+    }
+    return std::move(ret);
+}
+std::vector<Object> Parser::parseRow(Parser::TokenIter beg, Parser::TokenIter end) {
+    std::vector<Object> ret;
+    for (auto iter = beg; iter < end; iter += 2) {
+        if (iter->token == Token::VARCHAR_LIT)
+            ret.push_back(litManager.GetVarChar(iter->raw));
+        if (iter->token == Token::INT_LIT)
+            ret.push_back(litManager.GetInt(std::stoi(iter->raw)));
+    }
+    return std::move(ret);
 }
 Parser::TokenIter Parser::findToken(Parser::TokenIter beg, Parser::TokenIter end, Token::Type token, const std::string& raw) {
     for (auto iter = beg; iter != end; iter++)

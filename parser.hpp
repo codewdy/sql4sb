@@ -36,9 +36,11 @@ struct Parser {
     std::pair<std::string, std::string> parseFrom(TokenIter beg, TokenIter end);
     std::vector<Condition> parseWhere(TokenIter beg, TokenIter end);
     std::string parseTableName(TokenIter beg, TokenIter end);
-    std::pair<ReadExpr*, Object> parseSet(Parser::TokenIter beg, Parser::TokenIter end);
+    std::pair<ReadExpr*, Object> parseSet(TokenIter beg, TokenIter end);
     Condition parseCond(TokenIter beg, TokenIter end);
     Expr* parseExpr(TokenIter beg, TokenIter end);
+    std::vector<std::vector<Object>> parseRows(TokenIter beg, TokenIter end);
+    std::vector<Object> parseRow(TokenIter beg, TokenIter end);
     TokenIter findToken(TokenIter beg, TokenIter end, Token::Type token, const std::string& raw = "");
 };
 #endif

@@ -5,8 +5,6 @@
 #include "parser.hpp"
 
 int main() {
-    std::cout << "ok";
-    
     std::remove("test:table1.db");
     std::remove("test:table2.db");
     std::remove("test.dbx");
@@ -92,7 +90,11 @@ int main() {
     //manager.ShowTables();
 
     Parser p;
+    p.parse("select * from table1")->Run(manager);
     p.parse("update table1 set id = 1 where name = 'fine'")->Run(manager);
+    p.parse("select * from table1")->Run(manager);
+    p.parse("insert into table1 values (12, 'aaa'), (21, 'wangyan')")->Run(manager);
+    p.parse("select * from table1")->Run(manager);
 
     //manager.Delete("test", conds);
 }
