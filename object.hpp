@@ -35,6 +35,7 @@ struct ReadExpr : public Expr {
     int nullMask;
     TYPE type;
     std::string tbl, name;
+    ReadExpr(){};
     ReadExpr(const std::string& _name) : tbl(""), name(_name) {}
     ReadExpr(const std::string& _tbl, const std::string& _name) : tbl(_tbl), name(_name) {}
     virtual Object getObj(void* l, void* r = nullptr);

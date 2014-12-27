@@ -6,11 +6,16 @@
 
 
 Stmt* Parser::parse(const std::string& sql) {
+    std::cout << "ok";
+    
     TokenList l  = tokenize(sql);
     return parseSQL(l.begin(), l.end());
 }
 static const std::unordered_map<std::string, Token::Type> specialToken = {
+    {"update", Token::UPDATE},
+    {"set", Token::SET},
     {"select", Token::SELECT},
+    {"delete", Token::DELETE},    
     {"where", Token::WHERE},
     {"from", Token::FROM},
     {"and", Token::AND},
@@ -40,6 +45,8 @@ static std::string toLower(const std::string& str) {
     return std::move(ret);
 }
 Parser::TokenList Parser::tokenize(const std::string& sql) {
+    std::cout << "ok";
+    
     TokenList ret;
     auto iter = sql.begin();
     while (true) {
@@ -86,13 +93,52 @@ Parser::TokenList Parser::tokenize(const std::string& sql) {
     return ret;
 }
 Stmt* Parser::parseSQL(Parser::TokenIter beg, Parser::TokenIter end) {
+    std::cout << "ok";
+    
     switch (beg->token) {
         case Token::SELECT:
             return parseSelect(beg + 1, end);
+        case Token::DELETE:
+            return parseDelete(beg + 1, end);
+        case Token::UPDATE:
+            return parseUpdate(beg + 1, end);
+        case Token::INSERT:
+        //    return parseInsert(beg + 1, end);
+            
         default:
             throw "Syntax Error";
     }
 }
+
+UpdateStmt* Parser::parseUpdate(Parser::TokenIter beg, Parser::TokenIter end) {
+    std::cout << "ok";
+    auto setLoc = findToken(beg, end, Token::SET);
+    auto whereLoc = findToken(setLoc, end, Token::WHERE);
+    auto tablename = parseTableName(beg, setLoc);
+    std::cout << tablename;
+    auto set = parseSet(setLoc + 1, whereLoc);
+    auto where = parseWhere(whereLoc + 1, end);
+    UpdateStmt* ret = new UpdateStmt;
+    ret->tbl = tablename;
+    ret->lv = *set.first;
+    ret->obj = set.second;
+    ret->conds = std::move(where);
+    return ret;
+}
+
+
+DeleteStmt* Parser::parseDelete(Parser::TokenIter beg, Parser::TokenIter end) {
+    auto fromLoc = findToken(beg, end, Token::FROM);
+    auto whereLoc = findToken(fromLoc, end, Token::WHERE);
+    auto from = parseFrom(fromLoc + 1, whereLoc);
+    auto where = parseWhere(whereLoc + 1, end);
+    DeleteStmt* ret = new DeleteStmt;
+    ret->tbl = from.first;
+    //ret->tbl2 = from.second;
+    ret->conds = std::move(where);
+    return ret;
+}
+
 SelectStmt* Parser::parseSelect(Parser::TokenIter beg, Parser::TokenIter end) {
     auto fromLoc = findToken(beg, end, Token::FROM);
     auto whereLoc = findToken(fromLoc, end, Token::WHERE);
@@ -111,6 +157,11 @@ std::pair<std::string, std::string> Parser::parseFrom(Parser::TokenIter beg, Par
     else
         return std::make_pair(beg->raw, (COMMA + 1)->raw);
 }
+
+std::string Parser::parseTableName(Parser::TokenIter beg, Parser::TokenIter end) {
+    return beg->raw;
+}
+
 std::vector<Condition> Parser::parseWhere(Parser::TokenIter beg, Parser::TokenIter end) {
     std::vector<Condition> ret;
     if (beg != end) {
@@ -154,6 +205,25 @@ Condition Parser::parseCond(Parser::TokenIter beg, Parser::TokenIter end) {
     ret.r = parseExpr(OPER + 1, end);
     return ret;
 }
+
+std::pair<ReadExpr*, Object> Parser::parseSet(Parser::TokenIter beg, Parser::TokenIter end) {
+    auto iter = beg;
+    TokenIter OPER;
+   // while (true) {
+        OPER = findToken(iter, end, Token::OPER);
+        if (OPER == end)
+            throw "Syntax Error";
+        if (OPER->raw == "=") {
+           
+        } else {
+            throw "Syntax Error";
+        }
+   // }
+    ReadExpr* readexpr = (ReadExpr*)parseExpr(beg, OPER);
+    Object obj = ((LiteralExpr*)parseExpr(OPER + 1, end))->obj;
+    return std::pair<ReadExpr*, Object>(readexpr, obj);
+}
+
 Expr* Parser::parseExpr(Parser::TokenIter beg, Parser::TokenIter end) {
     if (end == beg + 1) {
         if (beg->token == Token::ID)

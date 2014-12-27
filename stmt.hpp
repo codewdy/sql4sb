@@ -26,6 +26,7 @@ struct UpdateStmt : public Stmt {
     std::vector<Condition> conds;
     ReadExpr lv;
     Object obj;
+    UpdateStmt(){};
     virtual void Run(Manager& manager);
 };
 struct CreateTableStmt : public Stmt {

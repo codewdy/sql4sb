@@ -5,6 +5,8 @@
 #include "parser.hpp"
 
 int main() {
+    std::cout << "ok";
+    
     std::remove("test:table1.db");
     std::remove("test:table2.db");
     std::remove("test.dbx");
@@ -73,7 +75,7 @@ int main() {
     // two conditions one table
     std::set<std::pair<std::string, std::string>> ids;
     ids.insert(std::make_pair("", "id"));
-    manager.Select("table1", "", conds, &ids);
+    //manager.Select("table1", "", conds, &ids);
 
     lexpr = ReadExpr("table1", "name");
     ReadExpr readrexpr = ReadExpr("table2", "name");
@@ -83,14 +85,14 @@ int main() {
     conds.clear();
     conds.push_back(cond);
     // three conditions two tables
-    manager.Select("table1", "table2", conds);
+    //manager.Select("table1", "table2", conds);
 
-    manager.Desc("table1");
+    //manager.Desc("table1");
 
-    manager.ShowTables();
+    //manager.ShowTables();
 
     Parser p;
-    p.parse("select * from table1 where name = 'fine'")->Run(manager);
+    p.parse("update table1 set id = 1 where name = 'fine'")->Run(manager);
 
     //manager.Delete("test", conds);
 }
