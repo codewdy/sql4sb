@@ -2,6 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <cstdio>
+#include "parser.hpp"
 
 int main() {
     std::remove("test:table1.db");
@@ -70,8 +71,8 @@ int main() {
     cond.op = op_eq;
     conds.push_back(cond);
     // two conditions one table
-    std::set<std::string> ids;
-    ids.insert("id");
+    std::set<std::pair<std::string, std::string>> ids;
+    ids.insert(std::make_pair("", "id"));
     manager.Select("table1", "", conds, &ids);
 
     lexpr = ReadExpr("table1", "name");
@@ -87,8 +88,9 @@ int main() {
     manager.Desc("table1");
 
     manager.ShowTables();
-    manager.DropTable("table1");
-    manager.ShowTables();
+
+    Parser p;
+    p.parse("select * from table1 where name = 'fine'")->Run(manager);
 
     //manager.Delete("test", conds);
 }

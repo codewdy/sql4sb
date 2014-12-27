@@ -71,46 +71,98 @@ void Manager::Delete(const std::string& tbl, const std::vector<Condition>& conds
     table->writeback();
 }
 
-void WriteRow(void* rec, const TableDesc& desc, std::set<std::string>* sel) {
+void WriteRow(void* rec, const TableDesc& desc, const std::vector<bool>& write) {
     unsigned short nullmap = *(unsigned short*)rec;
     (char*&)rec += 2;
     for (int i = 0; i < desc.colSize; i++) {
         const Type& t = desc.colType[i];
-        if (sel && sel->find(t.name) == sel->end())
-            continue;
-        if (nullmap & (1 << i)) {
-            std::cout << "NULL ";
-        } else {
-            switch (t.type) {
-                case TYPE_INT:
-                    std::cout << *(int*)rec << " ";
-                    break;
-                case TYPE_VARCHAR:
-                    for (char* p = (char*)rec; *p && p != (char*)rec + t.size; p++)
-                        std::cout << *p;
-                    std::cout << " ";
-                    break;
-            };
+        if (write[i])
+        {
+            if (nullmap & (1 << i)) {
+                std::cout << "NULL ";
+            } else {
+                switch (t.type) {
+                    case TYPE_INT:
+                        std::cout << *(int*)rec << " ";
+                        break;
+                    case TYPE_VARCHAR:
+                        for (char* p = (char*)rec; *p && p != (char*)rec + t.size; p++)
+                            std::cout << *p;
+                        std::cout << " ";
+                        break;
+                };
+            }
         }
         (char*&)rec += t.size;
     }
 }
 
-void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds, std::set<std::string>* sel){
+void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds, std::set<std::pair<std::string, std::string>>* sel){
     if ( tbl2 == "" ) {
         auto filtered = filterOne(tbl1, conds);
         auto table = getTable(tbl1, false);
+        std::vector<bool> write;
+        for (int i = 0; i < table->head->desc.colSize; i++) {
+            if (sel == nullptr) {
+                write.push_back(true);
+                continue;
+            }
+            std::string name = table->head->desc.colType[i].name;
+            if (sel->find(std::make_pair("", name)) != sel->end()) {
+                write.push_back(true);
+                continue;
+            }
+            if (sel->find(std::make_pair(tbl1, name)) != sel->end()) {
+                write.push_back(true);
+                continue;
+            }
+            write.push_back(false);
+        }
         for (auto row : filtered) {
-            WriteRow(row, table->head->desc, sel);
+            WriteRow(row, table->head->desc, write);
             std::cout << std::endl;
         }
     } else {
         auto filtered = filterTwo(tbl1, tbl2, conds);
         auto table1 = getTable(tbl1, false);
         auto table2 = getTable(tbl2, false);
+        std::vector<bool> write1;
+        for (int i = 0; i < table1->head->desc.colSize; i++) {
+            if (sel == nullptr) {
+                write1.push_back(true);
+                continue;
+            }
+            std::string name = table1->head->desc.colType[i].name;
+            if (sel->find(std::make_pair("", name)) != sel->end()) {
+                write1.push_back(true);
+                continue;
+            }
+            if (sel->find(std::make_pair(tbl1, name)) != sel->end()) {
+                write1.push_back(true);
+                continue;
+            }
+            write1.push_back(false);
+        }
+        std::vector<bool> write2;
+        for (int i = 0; i < table2->head->desc.colSize; i++) {
+            if (sel == nullptr) {
+                write2.push_back(true);
+                continue;
+            }
+            std::string name = table2->head->desc.colType[i].name;
+            if (sel->find(std::make_pair("", name)) != sel->end()) {
+                write2.push_back(true);
+                continue;
+            }
+            if (sel->find(std::make_pair(tbl2, name)) != sel->end()) {
+                write2.push_back(true);
+                continue;
+            }
+            write2.push_back(false);
+        }
         for (auto row : filtered) {
-            WriteRow(row.first, table1->head->desc, sel);
-            WriteRow(row.second, table2->head->desc, sel);
+            WriteRow(row.first, table1->head->desc, write1);
+            WriteRow(row.second, table2->head->desc, write2);
             std::cout << std::endl;
         }
     }

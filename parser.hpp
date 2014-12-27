@@ -1,24 +1,32 @@
 #ifndef PARSER_H
 #define PARSER_H
 #include "stmt.hpp"
+struct Token {
+    enum Type {
+        VARCHAR_LIT,
+        INT_LIT,
+        OPER,
+        ID,
+        SELECT,
+        WHERE,
+        FROM,
+        AND,
+    } token;
+    std::string raw;
+};
 struct Parser {
     LiteralManager litManager;
+    typedef std::vector<Token> TokenList;
+    typedef TokenList::iterator TokenIter;
     void clear();
-    Stmt* parse(char* sql);
-    Stmt* parseCreateDB(char* str);
-    Stmt* parseDropDB(char* str);
-    Stmt* parseUse(char* str);
-    Stmt* parseCreateTable(char* str);
-    Stmt* parseDropTable(char* str);
-    Stmt* parseInsert(char* str);
-    Stmt* parseDelete(char* str);
-    Stmt* parseUpdate(char* str);
-    Stmt* parseSelect(char* str);
-
-    Condition parseCondition(char* str);
-    Type parseType(char* str);
-    ReadExpr parseReadExpr(char* str);
-    Object parseObject(char* str);
-    std::string parseTableName(char* str);
+    Stmt* parse(const std::string& sql);
+    TokenList tokenize(const std::string& sql);
+    Stmt* parseSQL(TokenIter beg, TokenIter end);
+    SelectStmt* parseSelect(TokenIter beg, TokenIter end);
+    std::pair<std::string, std::string> parseFrom(TokenIter beg, TokenIter end);
+    std::vector<Condition> parseWhere(TokenIter beg, TokenIter end);
+    Condition parseCond(TokenIter beg, TokenIter end);
+    Expr* parseExpr(TokenIter beg, TokenIter end);
+    TokenIter findToken(TokenIter beg, TokenIter end, Token::Type token, const std::string& raw = "");
 };
 #endif

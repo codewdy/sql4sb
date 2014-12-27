@@ -16,7 +16,7 @@ struct Manager {
     std::vector<std::pair<void*, void*> > filterTwo(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds);
     void Insert(const std::string& tbl, const std::vector<std::vector<Object>>& rows);
     void Delete(const std::string& tbl, const std::vector<Condition>& conds);
-    void Select(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds, std::set<std::string>* sel = nullptr);
+    void Select(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds, std::set<std::pair<std::string, std::string>>* sel = nullptr);
     void Update(const std::string& tbl, const std::vector<Condition>& conds, ReadExpr& lv, const Object& rv);
     void CreateTable(const std::string& tbl, const std::vector<Type>& types);
     void DropTable(const std::string& tbl);
