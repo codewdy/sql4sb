@@ -27,6 +27,9 @@ static const std::unordered_map<std::string, Token::Type> specialToken = {
     {"where", Token::WHERE},
     {"from", Token::FROM},
     {"and", Token::AND},
+    {"primary", Token::PRIMARY},
+    {"int", Token::INT},
+    {"varchar", Token::VARCHAR},
 };
 static const std::unordered_set<char> IDChar = {
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
@@ -247,6 +250,9 @@ DescStmt* Parser::parseDesc(TokenIter beg, TokenIter end){
 
 CreateTableStmt* Parser::parseCreateTable(TokenIter beg, TokenIter end){
     CreateTableStmt* ret = new CreateTableStmt;
+    ret->tbl = beg->raw;
+    auto types = Parser::parseTypes(beg + 2, end - 1);
+    ret->types = std::move(types.first);
     return ret;
 }
 
@@ -327,6 +333,39 @@ std::vector<Object> Parser::parseRow(Parser::TokenIter beg, Parser::TokenIter en
             ret.push_back(litManager.GetInt(std::stoi(iter->raw)));
     }
     return std::move(ret);
+}
+std::pair<std::vector<Type>, std::string> Parser::parseTypes(TokenIter beg, TokenIter end) {
+    std::vector<Type> ret;
+    std::string pri;
+    while (true) {
+        auto iter = findToken(beg, end, Token::OPER, ",");
+        if (beg->token == Token::PRIMARY) {
+            pri = (beg + 3)->raw;
+        } else {
+            ret.push_back(parseType(beg, iter));
+        }
+        if (iter == end)
+            break;
+        beg = iter + 1;
+    }
+    return std::make_pair(std::move(ret), pri);
+}
+Type Parser::parseType(TokenIter beg, TokenIter end) {
+    Type ret;
+    strcpy(ret.name, beg->raw.c_str());
+    beg++;
+    if (beg->token == Token::INT) {
+        ret.type = TYPE_INT;
+        ret.size = 4;
+        beg += 3;
+    } else {
+        ret.type = TYPE_VARCHAR;
+        beg += 2;
+        ret.size = std::stoi(beg->raw);
+        beg++;
+    }
+    ret.null = (beg == end) || (beg->raw == "NULL");
+    return ret;
 }
 Parser::TokenIter Parser::findToken(Parser::TokenIter beg, Parser::TokenIter end, Token::Type token, const std::string& raw) {
     for (auto iter = beg; iter != end; iter++)

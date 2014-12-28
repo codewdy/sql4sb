@@ -24,6 +24,9 @@ struct Token {
         AND,
         INTO,
         VALUES,
+        PRIMARY,
+        INT,
+        VARCHAR,
     } token;
     std::string raw;
 };
@@ -55,6 +58,8 @@ struct Parser {
     Expr* parseExpr(TokenIter beg, TokenIter end);
     std::vector<std::vector<Object>> parseRows(TokenIter beg, TokenIter end);
     std::vector<Object> parseRow(TokenIter beg, TokenIter end);
+    std::pair<std::vector<Type>, std::string> parseTypes(TokenIter beg, TokenIter end);
+    Type parseType(TokenIter beg, TokenIter end);
     TokenIter findToken(TokenIter beg, TokenIter end, Token::Type token, const std::string& raw = "");
 };
 #endif

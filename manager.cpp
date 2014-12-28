@@ -258,7 +258,7 @@ void Manager::Desc(const std::string& tbl) {
         if (table->head->desc.colType[i].type == TYPE_INT)
             std::cout << " INT";
         else
-            std::cout << " STRING";
+            std::cout << " VARCHAR";
         std::cout << std::endl;
     }
 }
