@@ -8,7 +8,7 @@
 #include <vector>
 #include "type.hpp"
 const int PAGE_SIZE = 8192;
-const int NAME_LEN = 10;
+const int NAME_LEN = 50;
 struct Type {
     TYPE type;
     bool null;

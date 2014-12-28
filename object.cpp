@@ -28,6 +28,15 @@ Object LiteralManager::GetInt(int l) {
     return obj;
 }
 
+Object LiteralManager::GetNull() {
+    Object obj;
+    obj.loc = nullptr;
+    obj.size = 0;
+    obj.type = TYPE_INT;
+    obj.is_null = true;
+    return obj;
+}
+
 void LiteralManager::clear() {
     for (auto c : chars)
         delete [] c;

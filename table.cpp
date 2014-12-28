@@ -8,7 +8,7 @@ Table::Table(const std::string& _filename, bool init) : filename(_filename) {
         if (in)
             throw "Table Already Exist!";
         in.close();
-        std::fstream out(filename, std::ios::trunc | std::ios::out | std::ios::binary);
+        std::fstream out(filename, std::ios::out | std::ios::binary);
         head = (HeadPage*)new char[PAGE_SIZE];
         LastInfoPage = (InfoPage*)new char[PAGE_SIZE];
         memset(head, 0, PAGE_SIZE);
@@ -16,6 +16,7 @@ Table::Table(const std::string& _filename, bool init) : filename(_filename) {
         head->infoHeadPage = 1;
         head->pageCount = 2;
         out.write((char*)(void*)head, PAGE_SIZE);
+        out.seekp(PAGE_SIZE);
         out.write((char*)(void*)LastInfoPage, PAGE_SIZE);
         out.close();
         rowSize = 0;
@@ -67,7 +68,7 @@ void Table::setDirty(int page_id) {
     dirtyPages.insert(page_id);
 }
 void Table::writeback() {
-    std::ofstream out(filename, std::ios::binary | std::ios::out);
+    std::ofstream out(filename, std::ios::binary | std::ios::out | std::ios::in);
     for (auto page_id : dirtyPages) {
         out.seekp(page_id * PAGE_SIZE);
         out.write((char*)pages[page_id], PAGE_SIZE);

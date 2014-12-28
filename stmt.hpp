@@ -19,6 +19,7 @@ struct DeleteStmt : public Stmt {
 struct SelectStmt : public Stmt {
     std::string tbl1, tbl2;
     std::vector<Condition> conds;
+    std::vector<Expr*>* exprs;
     virtual void Run(Manager& manager);
 };
 struct UpdateStmt : public Stmt {

@@ -30,6 +30,7 @@ static const std::unordered_map<std::string, Token::Type> specialToken = {
     {"primary", Token::PRIMARY},
     {"int", Token::INT},
     {"varchar", Token::VARCHAR},
+    {"null", Token::NULL_LIT},
 };
 static const std::unordered_set<char> IDChar = {
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
@@ -173,6 +174,7 @@ SelectStmt* Parser::parseSelect(Parser::TokenIter beg, Parser::TokenIter end) {
     ret->tbl1 = from.first;
     ret->tbl2 = from.second;
     ret->conds = std::move(where);
+    ret->exprs = parseExprs(beg, fromLoc);
     return ret;
 }
 InsertStmt* Parser::parseInsert(Parser::TokenIter beg, Parser::TokenIter end) {
@@ -299,6 +301,20 @@ std::pair<ReadExpr*, Object> Parser::parseSet(Parser::TokenIter beg, Parser::Tok
     return std::pair<ReadExpr*, Object>(readexpr, obj);
 }
 
+
+std::vector<Expr*>* Parser::parseExprs(Parser::TokenIter beg, Parser::TokenIter end) {
+    if (beg->raw == "*")
+        return nullptr;
+    std::vector<Expr*>* ret = new std::vector<Expr*>;
+    while (true) {
+        auto iter = findToken(beg, end, Token::OPER, ",");
+        ret->push_back(parseExpr(beg, iter));
+        if (iter == end)
+            break;
+        beg = iter + 1;
+    }
+    return ret;
+}
 Expr* Parser::parseExpr(Parser::TokenIter beg, Parser::TokenIter end) {
     if (end == beg + 1) {
         if (beg->token == Token::ID)
@@ -307,6 +323,9 @@ Expr* Parser::parseExpr(Parser::TokenIter beg, Parser::TokenIter end) {
             return new LiteralExpr(litManager.GetVarChar(beg->raw));
         if (beg->token == Token::INT_LIT)
             return new LiteralExpr(litManager.GetInt(std::stoi(beg->raw)));
+        if (beg->token == Token::NULL_LIT)
+            return new LiteralExpr(litManager.GetNull());
+        throw "Syntax Error";
     } else if (end == beg + 3) {
         return new ReadExpr(beg->raw, (beg + 2)->raw);
     } else {
@@ -329,8 +348,12 @@ std::vector<Object> Parser::parseRow(Parser::TokenIter beg, Parser::TokenIter en
     for (auto iter = beg; iter < end; iter += 2) {
         if (iter->token == Token::VARCHAR_LIT)
             ret.push_back(litManager.GetVarChar(iter->raw));
-        if (iter->token == Token::INT_LIT)
+        else if (iter->token == Token::INT_LIT)
             ret.push_back(litManager.GetInt(std::stoi(iter->raw)));
+        else if (iter->token == Token::NULL_LIT)
+            ret.push_back(litManager.GetNull());
+        else
+            throw "Syntax Error";
     }
     return std::move(ret);
 }
@@ -357,12 +380,12 @@ Type Parser::parseType(TokenIter beg, TokenIter end) {
     if (beg->token == Token::INT) {
         ret.type = TYPE_INT;
         ret.size = 4;
-        beg += 3;
+        beg += 4;
     } else {
         ret.type = TYPE_VARCHAR;
         beg += 2;
         ret.size = std::stoi(beg->raw);
-        beg++;
+        beg += 2;
     }
     ret.null = (beg == end) || (beg->raw == "NULL");
     return ret;

@@ -17,11 +17,12 @@ struct Object {
     }
 };
 struct LiteralManager {
-    const int MAX_LENGTH = 40;
+    const int MAX_LENGTH = 200;
     std::vector<char*> chars;
     std::vector<int*> ints;
     Object GetInt(int l);
     Object GetVarChar(std::string& l);
+    Object GetNull();
     void clear();
 };
 struct Expr {

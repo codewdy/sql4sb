@@ -27,6 +27,7 @@ struct Token {
         PRIMARY,
         INT,
         VARCHAR,
+        NULL_LIT,
     } token;
     std::string raw;
 };
@@ -55,6 +56,7 @@ struct Parser {
     std::string parseTableName(TokenIter beg, TokenIter end);
     std::pair<ReadExpr*, Object> parseSet(TokenIter beg, TokenIter end);
     Condition parseCond(TokenIter beg, TokenIter end);
+    std::vector<Expr*>* parseExprs(TokenIter beg, TokenIter end);
     Expr* parseExpr(TokenIter beg, TokenIter end);
     std::vector<std::vector<Object>> parseRows(TokenIter beg, TokenIter end);
     std::vector<Object> parseRow(TokenIter beg, TokenIter end);

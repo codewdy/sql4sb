@@ -13,7 +13,7 @@ void DeleteStmt::Run(Manager& manager) {
 }
 
 void SelectStmt::Run(Manager& manager) {
-    manager.Select(tbl1, tbl2, conds);
+    manager.Select(tbl1, tbl2, conds, exprs);
 }
 
 void UpdateStmt::Run(Manager& manager) {
