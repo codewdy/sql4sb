@@ -49,6 +49,7 @@ Table::Table(const std::string& _filename, bool init) : filename(_filename) {
                     head->desc.colType[i].name ) {
                 size = head->desc.colType[i].size;
                 type = head->desc.colType[i].type;
+                break;
             } else {
                 offset += head->desc.colType[i].size;
                 nullMask <<= 1;                
