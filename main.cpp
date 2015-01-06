@@ -52,7 +52,8 @@ int main(int argc, char** argv) {
                 break;
             if (sql.substr(0, 4) == "exit")
                 break;
-            RunStmt(sql, parser, manager);
+            if (!sql.empty())
+                RunStmt(sql, parser, manager);
         }
     }
 }

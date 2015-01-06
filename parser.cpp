@@ -387,7 +387,7 @@ Type Parser::parseType(TokenIter beg, TokenIter end) {
         ret.size = std::stoi(beg->raw);
         beg += 2;
     }
-    ret.null = (beg == end) || (beg->raw == "NULL");
+    ret.null = (beg == end) || (beg->token == Token::NULL_LIT);
     return ret;
 }
 Parser::TokenIter Parser::findToken(Parser::TokenIter beg, Parser::TokenIter end, Token::Type token, const std::string& raw) {

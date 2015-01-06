@@ -240,6 +240,10 @@ void Manager::Desc(const std::string& tbl) {
             std::cout << " INT";
         else
             std::cout << " VARCHAR";
+        if (table->head->desc.colType[i].null)
+            std::cout << " NULL";
+        else
+            std::cout << " NOT NULL";
         std::cout << std::endl;
     }
 }
