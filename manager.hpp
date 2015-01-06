@@ -18,7 +18,7 @@ struct Manager {
     void Delete(const std::string& tbl, const std::vector<Condition>& conds);
     void Select(const std::string& tbl1, const std::string& tbl2, const std::vector<Condition>& conds, std::vector<Expr*>* sel = nullptr);
     void Update(const std::string& tbl, const std::vector<Condition>& conds, ReadExpr& lv, const Object& rv);
-    void CreateTable(const std::string& tbl, const std::vector<Type>& types);
+    void CreateTable(const std::string& tbl, const std::vector<Type>& types, const std::string& keyname);
     void DropTable(const std::string& tbl);
     void Use(const std::string& db);
     void CreateDB(const std::string& db);

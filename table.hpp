@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 #include "type.hpp"
+#include "baseobj.hpp"
+
 const int PAGE_SIZE = 8192;
 const int NAME_LEN = 50;
 struct Type {
@@ -44,10 +46,12 @@ struct InfoPage {
     Info infos[MaxInfo];
 };
 struct Table {
+    std::string primary_key;
     static const int RowBitmapSize = 2;
     std::string filename;
     std::unordered_map<void*, Info*> recordInfoMap;
     std::unordered_set<void*> usedRecords, emptyRecords;
+    std::set<Object> key_object; 
     std::map<void*, int> pageIndex;
     std::vector<void*> pages;
     std::set<int> dirtyPages;

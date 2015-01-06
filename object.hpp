@@ -2,20 +2,8 @@
 #define OBJECT_H
 #include <string>
 #include "type.hpp"
+#include "baseobj.hpp"
 #include "table.hpp"
-struct Object {
-    void* loc;
-    int size;
-    TYPE type;
-    bool is_null;
-    Object(){};
-    Object(void* location, int s, TYPE t, bool null) {
-        loc = location;
-        size = s;
-        type = t;
-        is_null = null;
-    }
-};
 struct LiteralManager {
     const int MAX_LENGTH = 200;
     std::vector<char*> chars;
