@@ -2,6 +2,14 @@
 #include <fstream>
 #include <iostream>
 
+void Table::initKey() {
+        keyoffset = 0;
+        for ( keyoffset=0; keyoffset<head->desc.colSize; keyoffset++ ) {
+            if (std::strcmp(head->desc.colType[keyoffset].name, head->keyname) == 0)
+                break;
+        }
+}
+
 Table::Table(const std::string& _filename, bool init) : filename(_filename) {
     std::ifstream in(filename, std::ios::in | std::ios::binary);
     if (init) {
@@ -40,21 +48,14 @@ Table::Table(const std::string& _filename, bool init) : filename(_filename) {
         }
         
         // get key object;
-        int offset = 2, size = 0;
-        TYPE type;
-        int nullMask = 1;
+        int offset = 2;
+        initKey();
         
-        for ( int i=0; i<head->desc.colSize; i++ ) {
-            if ( primary_key ==
-                    head->desc.colType[i].name ) {
-                size = head->desc.colType[i].size;
-                type = head->desc.colType[i].type;
-                break;
-            } else {
-                offset += head->desc.colType[i].size;
-                nullMask <<= 1;                
-            }
-        }
+        for ( int i=0; i<keyoffset; i++ )
+            offset += head->desc.colType[i].size;
+        int nullMask = 1 << keyoffset;
+        TYPE type = head->desc.colType[keyoffset].type;
+        int size = head->desc.colType[keyoffset].type;
 
 
         int infoIdx = head->infoHeadPage;

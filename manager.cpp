@@ -92,8 +92,13 @@ std::string Manager::tblFileName(const std::string& tbl) {
 }
 
 void Manager::Insert(const std::string& tbl, const std::vector<std::vector<Object>>& rows) {
-    auto tblX = getTable(tbl, false);
+    Table* tblX = getTable(tbl, false);
+    
+    
     for (auto row : rows) {
+        Object keyobj = row[tblX->keyoffset];
+        if ( auto iter = tblX->key_object.find(keyobj) != tblX->key_object.end()) 
+            throw "primary key clustered";
         if (row.size() != tblX->head->desc.colSize) {
             throw "Column Size Error;";
         }
@@ -102,6 +107,8 @@ void Manager::Insert(const std::string& tbl, const std::vector<std::vector<Objec
         }
     }
     for (auto row : rows) {
+        Object keyobj = row[tblX->keyoffset];
+        tblX->key_object.insert(keyobj);
         void* rec = (char*)tblX->genNewRecord();
         tblX->setDirty(rec);
         WriteBinRow(rec, tblX->head->desc, row);
@@ -184,13 +191,14 @@ void Manager::CreateTable(const std::string& tbl, const std::vector<Type>& types
     Table* table = getTable(tbl, true);
     table->head->desc.colSize = types.size();
     table->rowSize = Table::RowBitmapSize;
-    table->primary_key = key_name;
+    std::strcpy(table->head->keyname, key_name.c_str());
     for ( int i=0; i<types.size(); i++ ) {
         table->head->desc.colType[i] = types[i];
         table->rowSize += types[i].size;
     }
     table->setDirty(0);
     table->writeback();
+    table->initKey();
     std::fstream dbf(dbName + ".dbx", std::ios::in | std::ios::out | std::ios::binary);
     DBInfo info;
     dbf.read((char*)(void*)&info, sizeof(info));

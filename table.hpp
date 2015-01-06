@@ -24,7 +24,7 @@ struct Type {
         std::memcpy(name, name_, NAME_LEN);
     }
 };
-const int MaxCol = (PAGE_SIZE - 16) / sizeof(Type);
+const int MaxCol = (PAGE_SIZE - 128) / sizeof(Type);
 struct TableDesc {
     int colSize;
     Type colType[MaxCol];
@@ -32,6 +32,7 @@ struct TableDesc {
 struct HeadPage {
     int infoHeadPage;
     int pageCount;
+    char keyname[NAME_LEN];
     TableDesc desc;
 };
 struct Info {
@@ -46,7 +47,7 @@ struct InfoPage {
     Info infos[MaxInfo];
 };
 struct Table {
-    std::string primary_key;
+    int keyoffset;
     static const int RowBitmapSize = 2;
     std::string filename;
     std::unordered_map<void*, Info*> recordInfoMap;
@@ -65,6 +66,7 @@ struct Table {
     void* getPage(int page_id);
     void* genNewRecord();
     void removeRecord(void*);
+    void initKey();
     int newPage();
 };
 #endif
