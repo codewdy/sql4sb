@@ -255,6 +255,7 @@ CreateTableStmt* Parser::parseCreateTable(TokenIter beg, TokenIter end){
     ret->tbl = beg->raw;
     auto types = Parser::parseTypes(beg + 2, end - 1);
     ret->types = std::move(types.first);
+    ret->key = std::move(types.second);
     return ret;
 }
 

@@ -180,10 +180,11 @@ void Manager::Use(const std::string& db) {
 }
 
 
-void Manager::CreateTable(const std::string& tbl, const std::vector<Type>& types){
+void Manager::CreateTable(const std::string& tbl, const std::vector<Type>& types, const std::string& key_name){
     Table* table = getTable(tbl, true);
     table->head->desc.colSize = types.size();
     table->rowSize = Table::RowBitmapSize;
+    table->primary_key = key_name;
     for ( int i=0; i<types.size(); i++ ) {
         table->head->desc.colType[i] = types[i];
         table->rowSize += types[i].size;

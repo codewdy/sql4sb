@@ -38,6 +38,24 @@ Table::Table(const std::string& _filename, bool init) : filename(_filename) {
             pages.push_back(buf);
             pageIndex[buf] = i;
         }
+        
+        // get key object;
+        int offset = 2, size = 0;
+        TYPE type;
+        int nullMask = 1;
+        
+        for ( int i=0; i<head->desc.colSize; i++ ) {
+            if ( primary_key ==
+                    head->desc.colType[i].name ) {
+                size = head->desc.colType[i].size;
+                type = head->desc.colType[i].type;
+            } else {
+                offset += head->desc.colType[i].size;
+                nullMask <<= 1;                
+            }
+        }
+
+
         int infoIdx = head->infoHeadPage;
         while (infoIdx != 0) {
             InfoPage* infos = (InfoPage*)(void*)pages[infoIdx];
@@ -48,8 +66,15 @@ Table::Table(const std::string& _filename, bool init) : filename(_filename) {
                 recordInfoMap[rec] = info;
                 if (info->free)
                     emptyRecords.insert(rec);
-                else
+                else {
+                    Object ret;
+                    ret.size = size;
+                    ret.is_null = nullMask & *(unsigned short*)rec;
+                    ret.loc = (char*)rec + offset;
+                    ret.type = type;
+                    key_object.insert(ret);
                     usedRecords.insert(rec);
+                }
             }
             LastInfoPage = infos;
         }

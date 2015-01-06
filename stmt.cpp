@@ -21,7 +21,7 @@ void UpdateStmt::Run(Manager& manager) {
 }
 
 void CreateTableStmt::Run(Manager& manager) {
-    manager.CreateTable(tbl, types);
+    manager.CreateTable(tbl, types, key);
 }
 
 void DropTableStmt::Run(Manager& manager) {
