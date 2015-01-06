@@ -124,11 +124,11 @@ void LiteralExpr::Use(const std::string& lname, const std::string& rname, TableD
 
 #define DEF_OP(OP, RAW_OP) \
 bool op_##OP(const Object& lobj, const Object& robj){\
+    if ( lobj.is_null || robj.is_null )\
+        return false;\
     if ( lobj.type != robj.type ) {\
         throw "Type Error";\
     }\
-    if ( lobj.is_null || robj.is_null )\
-        return false;\
     if ( lobj.type == TYPE_INT ){\
         int* l = (int*)lobj.loc;\
         int* r = (int*)robj.loc;\
@@ -140,9 +140,25 @@ bool op_##OP(const Object& lobj, const Object& robj){\
     }\
 }
 
-DEF_OP(eq, ==)
 DEF_OP(ne, !=)
 DEF_OP(lt, <)
 DEF_OP(gt, >)
 DEF_OP(le, <=)
 DEF_OP(ge, >=)
+
+bool op_eq(const Object& lobj, const Object& robj){
+    if ( lobj.is_null || robj.is_null )
+        return lobj.is_null && robj.is_null;
+    if ( lobj.type != robj.type ) {
+        throw "Type Error";
+    }
+    if ( lobj.type == TYPE_INT ){
+        int* l = (int*)lobj.loc;
+        int* r = (int*)robj.loc;
+        return (*l == *r);
+    } else {
+        if (memcmp((char*)lobj.loc, (char*)robj.loc, lobj.size) == 0)
+            return true;
+        return false;
+    }
+}

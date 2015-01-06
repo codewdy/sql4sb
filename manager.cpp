@@ -22,7 +22,8 @@ void checkType(Type type, const Object& obj) {
 
 void WriteBinRow(void* buf, const TableDesc& desc, const std::vector<Object>& objs) {
     unsigned short nullMask = 1;
-    unsigned short nullX = 0;
+    unsigned short& nullX = *(unsigned short*)buf;
+    nullX = 0;
     void* iter = (char*)buf + 2;
     for (int i = 0; i < desc.colSize; i++) {
         if (objs[i].is_null)
