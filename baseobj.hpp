@@ -23,5 +23,11 @@ inline bool operator<(const Object& lhs, const Object& rhs) {
     return std::memcmp(lhs.loc, rhs.loc, size) < 0;
 }
 
+inline bool operator!=(const Object& lhs, const Object& rhs) {
+    int size = lhs.size > rhs.size ? lhs.size : rhs.size;
+    return std::memcmp(lhs.loc, rhs.loc, size) != 0;
+}
+
+
 #endif
 

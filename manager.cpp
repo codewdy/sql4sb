@@ -97,19 +97,22 @@ void Manager::Insert(const std::string& tbl, const std::vector<std::vector<Objec
     
     
     for (auto row : rows) {
-        Object keyobj = row[tblX->keyoffset];
-        if ( auto iter = tblX->key_object.find(keyobj) != tblX->key_object.end()) 
-            throw "primary key clustered";
-        if (row.size() != tblX->head->desc.colSize) {
+         if (row.size() != tblX->head->desc.colSize) {
             throw "Column Size Error;";
         }
         for (int i = 0; i < row.size(); i++) {
             checkType(tblX->head->desc.colType[i], row[i]);
         }
+        //check primary and insert
+        if ( tblX->keyoffset != -1 ) {
+            Object keyobj = row[tblX->keyoffset];
+            if ( auto iter = tblX->key_object.find(keyobj) != tblX->key_object.end()) 
+                throw "primary key clustered"; 
+            tblX->key_object.insert(keyobj);
+        }
     }
+    
     for (auto row : rows) {
-        Object keyobj = row[tblX->keyoffset];
-        tblX->key_object.insert(keyobj);
         void* rec = (char*)tblX->genNewRecord();
         tblX->setDirty(rec);
         WriteBinRow(rec, tblX->head->desc, row);
@@ -166,17 +169,45 @@ void Manager::Select(const std::string& tbl1, const std::string& tbl2, const std
 
 void Manager::Update(const std::string& tbl, const std::vector<Condition>& conds, ReadExpr& lv, const Object& rv){
     std::vector<void*> filtered = filterOne(tbl, conds);
+    if ( filtered.size() == 0 )
+        return;
+    
     Table* table = getTable(tbl, false);
     lv.Use(tbl, "", &table->head->desc);
+    
+    //check whether the update is primary key : rv is primary key and is not ""
+    // realize : if it exists in key_obj but not in filtered
 
-    for ( void* record : filtered ) {
-        if (rv.is_null) {
+    if ( rv.is_null ) {
+        for ( void* record : filtered ) {
             *(unsigned short*)record |= lv.nullMask;
-        } else {
-            *(unsigned short*)record &= ~lv.nullMask;
-            Object obj = lv.getObj(record);
-            memcpy(obj.loc, rv.loc, lv.size);
+            table->setDirty(record);
         }
+        table->writeback();
+        return;
+    }
+  
+    if ( std::strcmp(lv.name.c_str(), table->head->keyname) == 0
+        && table->keyoffset != -1 ) {
+        // construct set of filtered key objs;
+        
+        if ( filtered.size() > 1 )
+            throw "primary key clustered";
+            
+        Object obj = lv.getObj(filtered[0]);
+        
+        auto iter = table->key_object.find(rv);
+        if ( iter != table->key_object.end() && rv != obj ) 
+            throw "primary key clustered";
+
+        table->key_object.erase(table->key_object.find(obj));
+        table->key_object.insert(rv);
+    }
+    
+    for ( void* record : filtered ) {
+        *(unsigned short*)record &= ~lv.nullMask;
+        Object obj = lv.getObj(record);
+        memcpy(obj.loc, rv.loc, lv.size);
         table->setDirty(record);
     }
     table->writeback();

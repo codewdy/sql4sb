@@ -3,6 +3,10 @@
 #include <iostream>
 
 void Table::initKey() {
+        if ( std::strcmp(head->keyname, "") == 0 ) {
+            keyoffset = -1;
+            return;
+        }
         keyoffset = 0;
         for ( keyoffset=0; keyoffset<head->desc.colSize; keyoffset++ ) {
             if (std::strcmp(head->desc.colType[keyoffset].name, head->keyname) == 0)

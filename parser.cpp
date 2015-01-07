@@ -360,7 +360,7 @@ std::vector<Object> Parser::parseRow(Parser::TokenIter beg, Parser::TokenIter en
 }
 std::pair<std::vector<Type>, std::string> Parser::parseTypes(TokenIter beg, TokenIter end) {
     std::vector<Type> ret;
-    std::string pri;
+    std::string pri = "";
     while (true) {
         auto iter = findToken(beg, end, Token::OPER, ",");
         if (beg->token == Token::PRIMARY) {
